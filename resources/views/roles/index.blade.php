@@ -1,38 +1,59 @@
-@extends('layouts.app')
+@extends('admin.layouts.master')
 
-@section('content')
-<div class="container">
-    <h2>Roles</h2>
-    <a href="{{ route('roles.create') }}" class="btn btn-primary mb-3">Create Role</a>
+@section('body')
+<div class="content">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Roles</h2>
+                    <a href="{{ route('roles.create') }}" class="btn btn-primary btn-sm">Create Role</a>
+                </div>
+                <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    {{-- <th>Permissions</th> --}}
+                                    <th width="180px">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($roles as $role)
+                                    <tr>
+                                        <td>{{ $role->name }}</td>
+                                        {{-- <td>
+                                            @foreach($role->permissions as $permission)
+                                                <span class="badge bg-secondary">{{ $permission->name }}</span>
+                                            @endforeach
+                                        </td>
+                                        --}}
+                                        <td>
+                                            <a href="{{ route('roles.edit', $role->id) }}" class="btn btn-sm btn-warning me-1">Edit</a>
+                                            <form action="{{ route('roles.destroy', $role->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button onclick="return confirm('Delete this role?')" class="btn btn-sm btn-danger">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center">No roles found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Permissions</th>
-                <th width="180px">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($roles as $role)
-            <tr>
-                <td>{{ $role->name }}</td>
-                <td>{{ implode(', ', $role->permissions->pluck('name')->toArray()) }}</td>
-                <td>
-                    <a href="{{ route('roles.edit', $role->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    <form action="{{ route('roles.destroy', $role->id) }}" method="POST" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button onclick="return confirm('Delete this role?')" class="btn btn-sm btn-danger">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+                </div> <!-- end card-body -->
+            </div> <!-- end card -->
+        </div>
+    </div>
 </div>
 @endsection

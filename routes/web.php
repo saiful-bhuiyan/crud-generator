@@ -6,13 +6,13 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('admin.layouts.master');
-});
+// Route::get('/', function () {
+//     return view('admin.layouts.master');
+// });
 
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('roles', RoleController::class);

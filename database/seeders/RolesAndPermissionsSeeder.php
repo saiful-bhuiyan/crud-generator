@@ -14,12 +14,12 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        Permission::create(['name' => 'manage users']);
-        Permission::create(['name' => 'manage roles']);
+        // Permission::create(['name' => 'manage users']);
+        // Permission::create(['name' => 'manage roles']);
         
-        $admin = Role::create(['name' => 'admin']);
-        $admin->givePermissionTo(Permission::all());
+        // $admin = Role::create(['name' => 'admin']);
+        // $admin->givePermissionTo(Permission::all());
 
-        $user = Role::create(['name' => 'user']);
+        // $user = Role::create(['name' => 'user']);
     }
 }

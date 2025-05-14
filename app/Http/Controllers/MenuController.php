@@ -7,6 +7,14 @@ use Illuminate\Http\Request;
 
 class MenuController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:menu-index')->only('index');
+        $this->middleware('permission:menu-create')->only(['create', 'store']);
+        $this->middleware('permission:menu-update')->only(['edit', 'update']);
+        $this->middleware('permission:menu-delete')->only('destroy');
+    }
+
     public function index()
     {
         $menus = Menu::with('children', 'parent')->whereNull('parent_id')->orderBy('order')->get();

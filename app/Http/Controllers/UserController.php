@@ -11,6 +11,15 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+    public function __construct()
+    {
+        $this->middleware('permission:user-index')->only('index');
+        $this->middleware('permission:user-create')->only(['create', 'store']);
+        $this->middleware('permission:user-update')->only(['edit', 'update']);
+        $this->middleware('permission:user-delete')->only('destroy');
+    }
+    
     public function index()
     {
         $users = User::all();

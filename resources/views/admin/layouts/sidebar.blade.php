@@ -14,6 +14,7 @@
                 </li>
                 
                 @foreach ($menus as $menu)
+                @if(auth()->user()->can($menu->permission_name))
                     @php
                         $isActive = request()->is(trim($menu->route, '/')) || $menu->children->contains(function($child) {
                             return request()->is(trim($child->route, '/'));
@@ -28,11 +29,13 @@
                             </a>
                             <ul>
                                 @foreach ($menu->children as $child)
+                                    @if(auth()->user()->can($child->permission_name))
                                     <li class="{{ request()->is(trim($child->route, '/')) ? 'active' : '' }}">
                                         <a href="{{ $child->route ? url(env('APP_URL','http://127.0.0.1:8000')).'/'.$child->route : '#' }}">
                                             {{ $child->title }}
                                         </a>
                                     </li>
+                                    @endif
                                 @endforeach
                             </ul>
                         </li>
@@ -43,6 +46,7 @@
                             </a>
                         </li>
                     @endif
+                @endif
                 @endforeach
             </ul>
         </div>

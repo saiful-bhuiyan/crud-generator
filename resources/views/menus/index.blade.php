@@ -8,7 +8,9 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">Menus</h4>
+                    @can('menu-create')
                     <a href="{{ route('menus.create') }}" class="btn btn-primary">Add New Menu</a>
+                    @endcan
                 </div>
 
                 <div class="card-body">
@@ -39,12 +41,17 @@
                                         <td>—</td>
                                         <td>{{ $menu->order }}</td>
                                         <td>
+                                            @can('menu-edit')
                                             <a href="{{ route('menus.edit', $menu) }}" class="btn btn-sm btn-warning">Edit</a>
+                                            @endcan
+                                            @can('menu-delete')    
                                             <form action="{{ route('menus.destroy', $menu) }}" method="POST" class="d-inline-block">
                                                 @csrf @method('DELETE')
                                                 <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this menu?')">Delete</button>
                                             </form>
+                                            @endcan
                                         </td>
+                                        
                                     </tr>
 
                                     @foreach ($menu->children as $child)
@@ -56,11 +63,15 @@
                                             <td>{{ $menu->title }}</td>
                                             <td>{{ $child->order }}</td>
                                             <td>
+                                                @can('menu-edit')
                                                 <a href="{{ route('menus.edit', $child) }}" class="btn btn-sm btn-warning">Edit</a>
+                                                @endcan
+                                                @can('menu-delete')
                                                 <form action="{{ route('menus.destroy', $child) }}" method="POST" class="d-inline-block">
                                                     @csrf @method('DELETE')
                                                     <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this submenu?')">Delete</button>
                                                 </form>
+                                                @endcan
                                             </td>
                                         </tr>
                                     @endforeach

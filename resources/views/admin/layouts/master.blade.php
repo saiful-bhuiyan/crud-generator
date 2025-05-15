@@ -23,6 +23,8 @@
 
     <link rel="stylesheet" href="{{ static_asset('assets/css/style.css') }}">
 
+    <link rel="stylesheet" href="{{ static_asset('assets/plugins/select2/css/select2.min.css') }}">
+
     @yield('style')
 </head>
 
@@ -38,6 +40,7 @@
         @include('admin.layouts.sidebar')
 
         <div class="page-wrapper">
+        @include('components.alerts')
         @yield('body')
         </div>
 
@@ -57,6 +60,8 @@
         <script src="{{ static_asset('assets/plugins/apexchart/chart-data.js') }}"></script>
 
         <script src="{{ static_asset('assets/js/script.js') }}"></script>
+
+        <script src="{{ static_asset('assets/plugins/select2/js/select2.min.js') }}"></script>
 
         @yield('script')
 </body>

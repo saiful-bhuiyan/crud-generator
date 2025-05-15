@@ -3,43 +3,58 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use App\Models\User;
-use App\Models\Menu;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\PermissionRegistrar;
 
 class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // === 1. Create Roles and Permissions ===
-        $modules = ['user', 'role', 'menu'];
+        // Disable foreign key checks to safely truncate tables
+        Schema::disableForeignKeyConstraints();
+
+        // Clear permission cache
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // Truncate roles and permissions
+        Permission::truncate();
+        Role::truncate();
+        \DB::table('role_has_permissions')->truncate();
+        \DB::table('model_has_roles')->truncate();
+        \DB::table('model_has_permissions')->truncate();
+
+        Schema::enableForeignKeyConstraints();
+
+        // === 1. Define Modules and Actions ===
+        $modules = ['user', 'role', 'menu', 'general-setting'];
         $actions = ['create', 'index', 'edit', 'delete'];
 
+        // === 2. Create Super Admin Role ===
         $adminRole = Role::firstOrCreate(['name' => 'super-admin']);
 
+        // === 3. Create Permissions and assign to super-admin ===
         foreach ($modules as $module) {
             foreach ($actions as $action) {
-                $permissionName = "{$module}-{$action}";
-                $permission = Permission::firstOrCreate(['name' => $permissionName]);
-                if (!$adminRole->hasPermissionTo($permission)) {
-                    $adminRole->givePermissionTo($permission);
-                }
+                $permission = Permission::firstOrCreate([
+                    'name' => "{$module}-{$action}",
+                ]);
+                $adminRole->givePermissionTo($permission);
             }
         }
 
-        // === 2. Create Admin User ===
-        // $adminEmail = 'admin@example.com';
-        // if (!User::where('email', $adminEmail)->exists()) {
-        //     $admin = User::create([
-        //         'name' => 'Admin',
-        //         'email' => $adminEmail,
-        //         'password' => Hash::make('password'),
-        //     ]);
-        //     $admin->assignRole($adminRole);
-        // }
-
-        
+        // === 4. Create Super Admin User if not exists ===
+        $adminEmail = 'superadmin@example.com';
+        $admin = User::firstOrCreate(
+            ['email' => $adminEmail],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('password'), // Change in production!
+            ]
+        );
+        $admin->assignRole($adminRole);
     }
 }

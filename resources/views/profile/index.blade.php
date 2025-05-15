@@ -1,6 +1,5 @@
 @extends('admin.layouts.master')
 @section('body')
-@include('components.alerts')
 <div class="content">
     <div class="page-header">
         <div class="page-title">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\GeneralSetting;
 use Illuminate\Support\Facades\Storage;
 
 if (!function_exists('static_asset')) {
@@ -62,5 +63,12 @@ if (!function_exists('delete_uploaded_asset')) {
             return false;
         }
         return Storage::disk($disk)->delete($path);
+    }
+}
+
+if(!function_exists('getGeneralSetting')) {
+    function getGeneralSetting($type) {
+        $setting = GeneralSetting::where('type',$type)->first();
+        return $setting->value ?? null;
     }
 }

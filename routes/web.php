@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GeneralSettingController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
@@ -27,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('users', UserController::class);
     Route::resource('menus', MenuController::class);
     Route::resource('profile', ProfileController::class)->only('index','store');
+    Route::resource('general-settings', GeneralSettingController::class)->only('index','store');
 
     
 });

@@ -28,7 +28,9 @@
                 <div class="login-content">
                     <div class="login-userset">
                         <div class="login-logo">
-                            <img src="assets/img/logo.png" alt="img">
+                            <img src="{{ isset($general_settings['site_logo']) && $general_settings['site_logo'] 
+                                ? asset($general_settings['site_logo']) 
+                                : static_asset('assets/img/logo.png') }}" alt="img">
                         </div>
                         <div class="login-userheading">
                             <h3>Sign In</h3>

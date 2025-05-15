@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
@@ -25,5 +26,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('permissions', PermissionController::class);
     Route::resource('users', UserController::class);
     Route::resource('menus', MenuController::class);
+    Route::resource('profile', ProfileController::class)->only('index','store');
+
     
 });

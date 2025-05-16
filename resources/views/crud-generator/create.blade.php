@@ -17,7 +17,7 @@
                     <form action="{{ route('crud-generator.generate') }}" method="POST">
                         @csrf
                         <div class="form-group mb-3">
-                            <label for="table_name">Table Name</label>
+                            <label for="table_name">Table Name <span class="text-danger">*</span></label>
                             <input type="text" name="table_name" id="table_name" class="form-control" placeholder="e.g. products" required>
                         </div>
 
@@ -48,6 +48,7 @@
                                     <input type="text" name="columns[0][foreign_column]" class="form-control" placeholder="Foreign Column (optional)">
                                 </div>
                                 <div class="col-md-1 text-center">
+                                    <input type="hidden" name="columns[0][required]" value="0">
                                     <input type="checkbox" name="columns[0][required]" value="1" id="required_0">
                                     <label for="required_0" class="mb-0">Required</label>
                                 </div>
@@ -99,6 +100,7 @@
                 <input type="text" name="columns[${columnIndex}][foreign_column]" class="form-control" placeholder="Foreign Column (optional)">
             </div>
             <div class="col-md-1 text-center">
+                <input type="hidden" name="columns[${columnIndex}][required]" value="0">
                 <input type="checkbox" name="columns[${columnIndex}][required]" value="1" id="required_${columnIndex}">
                 <label for="required_${columnIndex}" class="mb-0">Required</label>
             </div>

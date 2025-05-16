@@ -1,13 +1,15 @@
 <div class="header">
 
             <div class="header-left active">
-                <a href="index.html" class="logo">
+                <a href="{{ url('/') }}" class="logo">
                     <img src="{{ isset($general_settings['site_logo']) && $general_settings['site_logo'] 
                                 ? asset($general_settings['site_logo']) 
                                 : static_asset('assets/img/logo.png') }}" alt="img">
                 </a>
-                <a href="index.html" class="logo-small">
-                    <img src="{{ static_asset('assets/img/logo-small.png') }}" alt="">
+                <a href="{{ url('/') }}" class="logo-small">
+                    <img src="{{ isset($general_settings['site_mini_logo']) && $general_settings['site_mini_logo'] 
+                                ? asset($general_settings['site_mini_logo']) 
+                                : static_asset('assets/img/logo.png') }}" alt="">
                 </a>
                 <a id="toggle_btn" href="javascript:void(0);">
                 </a>
@@ -174,7 +176,9 @@
                             </div>
                             <hr class="m-0">
                             <a class="dropdown-item" href="{{ route('profile.index') }}"> <i class="me-2" data-feather="user"></i> My Profile</a>
+                            @can('general-setting-index')
                             <a class="dropdown-item" href="{{ route('general-settings.index') }}"><i class="me-2" data-feather="settings"></i>Settings</a>
+                            @endcan
                             <hr class="m-0">
                             <a class="dropdown-item logout pb-0" href="{{ url('logout') }}"><img src="{{ static_asset('assets/img/icons/log-out.svg') }}" class="me-2" alt="img">Logout</a>
                         </div>

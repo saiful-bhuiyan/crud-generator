@@ -9,6 +9,13 @@ use Illuminate\Support\Str;
 
 class GeneralSettingController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:general-setting-index')->only('index');
+        $this->middleware('permission:general-setting-create')->only(['create', 'store']);
+        $this->middleware('permission:general-setting-update')->only(['update', 'update']);
+        $this->middleware('permission:general-setting-delete')->only('destroy');
+    }
     /**
      * Display a listing of the resource.
      */
@@ -38,25 +45,31 @@ class GeneralSettingController extends Controller
                 $this->overWriteEnvFile('APP_NAME', $value);
             }
 
-            // Upload image/photo/logo
-            $lastSegment = strtolower(Str::afterLast($type, '_'));
-            if (in_array($lastSegment, ['photo', 'image', 'logo']) && $request->hasFile($type)) {
-                $existingSetting = GeneralSetting::where('type', $type)->first();
-                if ($existingSetting && !empty($existingSetting->value)) {
-                    delete_uploaded_asset($existingSetting->value);
-                }
-                $value = upload_asset($request->file($type));
-            }
-
             // Update APP_TIMEZONE
             if ($type == 'timezone') {
                 $this->overWriteEnvFile('APP_TIMEZONE', $value);
             }
 
-            // Save to DB
-            $general_settings = GeneralSetting::firstOrNew(['type' => $type]);
-            $general_settings->value = is_array($value) ? json_encode($value) : $value;
-            $general_settings->save();
+            // Upload image/photo/logo
+            $lastSegment = strtolower(Str::afterLast($type, '_'));
+            if (in_array($lastSegment, ['photo', 'image', 'logo'])) {
+                if($request->hasFile($type)) {
+                    $existingSetting = GeneralSetting::where('type', $type)->first();
+                    if ($existingSetting && !empty($existingSetting->value)) {
+                        delete_uploaded_asset($existingSetting->value);
+                    }
+                    $value = upload_asset($request->file($type));
+                    $existingSetting->value = is_array($value) ? json_encode($value) : $value;
+                    $existingSetting->save();
+                }
+            } else {
+                // Save to DB
+                $general_settings = GeneralSetting::firstOrNew(['type' => $type]);
+                $general_settings->value = is_array($value) ? json_encode($value) : $value;
+                $general_settings->save();
+            }
+
+            
         }
 
         Artisan::call('cache:clear');

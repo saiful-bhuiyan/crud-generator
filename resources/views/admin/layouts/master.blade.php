@@ -40,7 +40,6 @@
         @include('admin.layouts.sidebar')
 
         <div class="page-wrapper">
-        @include('components.alerts')
         @yield('body')
         </div>
 

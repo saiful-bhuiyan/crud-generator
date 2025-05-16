@@ -31,7 +31,7 @@ class PermissionSeeder extends Seeder
 
         // === 1. Define Modules and Actions ===
         $modules = ['user', 'role', 'menu', 'general-setting'];
-        $actions = ['create', 'index', 'edit', 'delete'];
+        $actions = ['create', 'index', 'update', 'delete'];
 
         // === 2. Create Super Admin Role ===
         $adminRole = Role::firstOrCreate(['name' => 'super-admin']);

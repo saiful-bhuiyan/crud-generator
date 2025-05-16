@@ -37,7 +37,7 @@
                                             @endforeach
                                         </td>
                                         <td>
-                                            @can('user-edit')
+                                            @can('user-update')
                                             <a href="{{ route('users.edit', $user->id) }}" class="btn btn-sm btn-warning me-1">Edit</a>
                                             @endcan
                                             @can('user-delete')

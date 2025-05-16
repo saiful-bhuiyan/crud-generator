@@ -17,7 +17,8 @@ return new class extends Migration
             $table->text('avatar')->nullable()->after('phone');
             $table->ipAddress('ip_address')->nullable()->after('avatar');
             $table->timestamp('last_login')->nullable()->after('ip_address');
-            $table->boolean('is_active')->default(true)->after('last_login');
+            $table->timestamp('last_seen')->nullable()->after('last_login');
+            $table->boolean('is_active')->default(true)->after('last_seen');
         });
     }
 
@@ -33,6 +34,7 @@ return new class extends Migration
             'phone',
             'ip_address',
             'last_login',
+            'last_seen',
             'is_active',
             ]);
         });

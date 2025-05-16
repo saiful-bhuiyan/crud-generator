@@ -36,7 +36,7 @@
                                         </td>
                                         --}}
                                         <td>
-                                            @can('role-edit')
+                                            @can('role-update')
                                             <a href="{{ route('roles.edit', $role->id) }}" class="btn btn-sm btn-warning me-1">Edit</a>
                                             @endcan
                                             @can('role-delete')

@@ -36,18 +36,18 @@
                                     $grouped = [];
 
                                     foreach ($permissions as $permission) {
-                                    if (preg_match('/^([a-zA-Z_-]+)-(create|index|edit|delete)$/', $permission->name, $matches)) {
+                                    if (preg_match('/^([a-zA-Z_-]+)-(create|index|update|delete)$/', $permission->name, $matches)) {
                                     $grouped[$matches[1]][$matches[2]] = $permission->name;
                                     }
                                     }
 
-                                    $actionLabels = ['create' => 'Create', 'index' => 'Read', 'edit' => 'Update', 'delete' => 'Delete'];
+                                    $actionLabels = ['create' => 'Create', 'index' => 'Read', 'update' => 'Update', 'delete' => 'Delete'];
                                     @endphp
 
                                     @foreach($grouped as $module => $actions)
                                     <tr>
                                         <td class="text-capitalize">{{ str_replace('_', ' ', $module) }}</td>
-                                        @foreach(['create', 'index', 'edit', 'delete'] as $action)
+                                        @foreach(['create', 'index', 'update', 'delete'] as $action)
                                         <td>
                                             @if(isset($actions[$action]))
                                             <div class="form-check">

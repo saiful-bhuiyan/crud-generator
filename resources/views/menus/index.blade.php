@@ -41,7 +41,7 @@
                                         <td>—</td>
                                         <td>{{ $menu->order }}</td>
                                         <td>
-                                            @can('menu-edit')
+                                            @can('menu-update')
                                             <a href="{{ route('menus.edit', $menu) }}" class="btn btn-sm btn-warning">Edit</a>
                                             @endcan
                                             @can('menu-delete')    
@@ -63,7 +63,7 @@
                                             <td>{{ $menu->title }}</td>
                                             <td>{{ $child->order }}</td>
                                             <td>
-                                                @can('menu-edit')
+                                                @can('menu-update')
                                                 <a href="{{ route('menus.edit', $child) }}" class="btn btn-sm btn-warning">Edit</a>
                                                 @endcan
                                                 @can('menu-delete')

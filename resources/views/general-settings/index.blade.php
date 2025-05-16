@@ -35,6 +35,20 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="col-lg-12">
+                    <div class="form-group">
+                        <label> Site Mini Logo</label>
+                        <div class="image-upload">
+                            <input type="hidden" name="types[]" value="site_mini_logo">
+                            <input type="file" name="site_mini_logo">
+                            <div class="image-uploads">
+                                <img src="{{ getGeneralSetting('site_mini_logo') ? getGeneralSetting('site_mini_logo') : static_asset('assets/img/icons/upload.svg') }}" height="70px" width="70px" alt="img">
+                                <h4>Drag and drop a file to upload</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="col-lg-3 col-sm-6 col-12">
                     <div class="form-group">

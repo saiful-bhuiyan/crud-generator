@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Menu;
 use Illuminate\Support\Str;
 
 class CrudGeneratorService
@@ -19,19 +20,53 @@ class CrudGeneratorService
         $modelVariable = Str::camel(Str::singular($tableName));
         $controllerName = $modelName . 'Controller';
 
-        $migration = $this->generateMigration($tableName, $columns);
-        $model = $this->generateModel($modelName, $tableName, $columns);
-        $controller = $this->generateController($modelName, $controllerName, $tableName, $columns);
+        // Generate migration file
+        $migrationContent = $this->generateMigration($tableName, $columns);
+        $migrationFileName = date('Y_m_d_His') . "_create_{$tableName}_table.php";
+        $this->createFile(database_path("migrations/{$migrationFileName}"), $migrationContent);
+
+        // Generate model file
+        $modelContent = $this->generateModel($modelName, $tableName, $columns);
+        $this->createFile(app_path("Models/{$modelName}.php"), $modelContent);
+
+        // Generate controller file
+        $controllerContent = $this->generateController($modelName, $controllerName, $tableName, $columns);
+        $this->createFile(app_path("Http/Controllers/{$controllerName}.php"), $controllerContent);
+
+        // Generate views
+        $viewFolder = resource_path("views/{$tableName}");
+        if (!file_exists($viewFolder)) {
+            mkdir($viewFolder, 0755, true);
+        }
         $views = $this->generateViews($modelName, $modelVariable, $tableName, $columns);
-        $routes = $this->generateRoutes($tableName, $controllerName);
+        foreach ($views as $viewName => $viewContent) {
+            $this->createFile("{$viewFolder}/{$viewName}.blade.php", $viewContent);
+        }
+
+        $modelName = $this->formalText($tableName);
+
+        // Append routes
+        $routeContent = $this->generateRoutes($tableName, $controllerName);
+        file_put_contents(base_path('routes/crud.php'), "\n" . $routeContent, FILE_APPEND);
+
+        $this->addMenuAndPermissions($modelName);
 
         return [
-            'migration' => $migration,
-            'model' => $model,
-            'controller' => $controller,
-            'views' => $views,
-            'routes' => $routes,
+            'migration' => $migrationFileName,
+            'model' => "{$modelName}.php",
+            'controller' => "{$controllerName}.php",
+            'views' => array_keys($views),
+            'routes' => 'Appended to web.php',
         ];
+    }
+
+    protected function createFile(string $path, string $content): void
+    {
+        $dir = dirname($path);
+        if (!file_exists($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        file_put_contents($path, $content);
     }
 
     protected function generateMigration(string $tableName, array $columns): string
@@ -60,7 +95,7 @@ class CrudGeneratorService
                     break;
                 case 'double':
                 case 'float':
-                    $fields .= "\$table->double('$name', 8, 2)$nullable;\n            ";
+                    $fields .= "\$table->double('$name')$nullable;\n            ";
                     break;
                 case 'boolean':
                     $fields .= "\$table->boolean('$name')->default(false);\n            ";
@@ -85,6 +120,7 @@ class CrudGeneratorService
         }
 
         return <<<PHP
+<?php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -111,6 +147,12 @@ PHP;
     protected function studlyCase(string $value): string
     {
         return str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $value)));
+    }
+
+    protected function formalText(string $value): string
+    {
+        // this returns snake_case to formal text like menu_items => Menu Items
+        return ucwords(str_replace('_', ' ', $value));
     }
 
     protected function generateModel(string $modelName, string $tableName, array $columns): string
@@ -144,6 +186,7 @@ PHP;
 
     protected function generateController(string $modelName, string $controllerName, string $tableName, array $columns): string
     {
+        $permissionBase = Str::snake($modelName);
         $modelVariable = Str::camel($modelName);
         $validationRules = [];
         foreach ($columns as $col) {
@@ -180,6 +223,15 @@ use Illuminate\Http\Request;
 
 class $controllerName extends Controller
 {
+
+    public function __construct()
+    {
+        \$this->middleware('permission:{$permissionBase}-index')->only('index');
+        \$this->middleware('permission:{$permissionBase}-create')->only(['create', 'store']);
+        \$this->middleware('permission:{$permissionBase}-update')->only(['edit', 'update']);
+        \$this->middleware('permission:{$permissionBase}-delete')->only('destroy');
+    }
+        
     public function index()
     {
         \${$modelVariable}s = $modelName::paginate(10);
@@ -197,7 +249,7 @@ class $controllerName extends Controller
             $validationStr
         ]);
 
-        $model = $modelName::create([
+        $modelName::create([
             $storeUpdateFieldsStr
         ]);
 
@@ -238,9 +290,11 @@ PHP;
 
     protected function generateViews(string $modelName, string $modelVariable, string $tableName, array $columns): array
     {
-        // index blade with table headers and rows
+        // --- Index View ---
+
         $tableHeaders = '';
         $tableBody = '';
+        $permissionBase = Str::snake($modelName);
         $countCols = count($columns);
         foreach ($columns as $col) {
             $label = ucfirst(str_replace('_', ' ', $col['name']));
@@ -249,149 +303,235 @@ PHP;
         }
 
         $indexView = <<<BLADE
-@extends('admin.layouts.master')
+    @extends('admin.layouts.master')
 
-@section('body')
-<div class="content">
-    <div class="row justify-content-center">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <h4>$modelName List</h4>
-                    <a href="{{ route('$tableName.create') }}" class="btn btn-primary btn-sm">Add New</a>
-                </div>
-                <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    $tableHeaders
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse(\${$modelVariable}s as \${$modelVariable}Item)
-                                    <tr>
-                                        <td>{{ \$loop->iteration }}</td>
-                                        $tableBody
-                                        <td>
-                                            <a href="{{ route('$tableName.show', \${$modelVariable}Item) }}" class="btn btn-info btn-sm">View</a>
-                                            <a href="{{ route('$tableName.edit', \${$modelVariable}Item) }}" class="btn btn-warning btn-sm">Edit</a>
-                                            <form action="{{ route('$tableName.destroy', \${$modelVariable}Item) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Are you sure?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button class="btn btn-danger btn-sm">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr><td colspan="{{ $countCols + 2 }}" class="text-center">No $modelName found.</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+    @section('body')
+    <div class="content">
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <h4>$modelName List</h4>
+                        @can('$permissionBase-create')
+                        <a href="{{ route('$tableName.create') }}" class="btn btn-primary btn-sm">Add New</a>
+                        @endcan
                     </div>
-                    {{ \${$modelVariable}s->links() }}
+                    <div class="card-body">
+                        @if(session('success'))
+                            <div class="alert alert-success">{{ session('success') }}</div>
+                        @endif
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        $tableHeaders
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse(\${$modelVariable}s as \${$modelVariable}Item)
+                                        <tr>
+                                            <td>{{ \$loop->iteration }}</td>
+                                            $tableBody
+                                            <td>
+                                                @can('$permissionBase-update')
+                                                <a href="{{ route('$tableName.edit', \${$modelVariable}Item) }}" class="btn btn-warning btn-sm">Edit</a>
+                                                @endcan
+                                                @can('$permissionBase-delete')
+                                                <form action="{{ route('$tableName.destroy', \${$modelVariable}Item) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Are you sure?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="btn btn-danger btn-sm">Delete</button>
+                                                </form>
+                                                @endcan
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="{{ $countCols + 2 }}" class="text-center">No $modelName found.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        {{ \${$modelVariable}s->links() }}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-@endsection
-BLADE;
+    @endsection
+    BLADE;
 
-        // create blade form inputs
-        $createInputs = '';
-        foreach ($columns as $col) {
-            $colName = $col['name'];
-            $label = ucfirst(str_replace('_', ' ', $colName));
-            $type = $col['type'];
+        // --- Form Inputs Generator (for create & edit) ---
+        $generateInputs = function($isEdit = false) use ($columns, $modelVariable) {
+            $inputs = '';
+            foreach ($columns as $col) {
+                $colName = $col['name'];
+                $label = ucfirst(str_replace('_', ' ', $colName));
+                $type = $col['type'];
 
-            $inputType = 'text';
-            if (in_array($type, ['text'])) {
-                $inputType = 'textarea';
-            } elseif (in_array($type, ['integer', 'unsignedBigInteger'])) {
-                $inputType = 'number';
-            } elseif (in_array($type, ['double', 'float'])) {
-                $inputType = 'number" step="any';
-            } elseif ($type === 'boolean') {
-                $inputType = 'checkbox';
-            } elseif ($type === 'date') {
-                $inputType = 'date';
-            } elseif ($type === 'datetime') {
-                $inputType = 'datetime-local';
-            } elseif (in_array($type, ['image', 'file'])) {
-                $inputType = 'file';
+                $inputType = 'text';
+                if (in_array($type, ['text'])) {
+                    $inputType = 'textarea';
+                } elseif (in_array($type, ['integer', 'unsignedBigInteger'])) {
+                    $inputType = 'number';
+                } elseif (in_array($type, ['double', 'float'])) {
+                    $inputType = 'number" step="any';
+                } elseif ($type === 'boolean') {
+                    $inputType = 'checkbox';
+                } elseif ($type === 'date') {
+                    $inputType = 'date';
+                } elseif ($type === 'datetime') {
+                    $inputType = 'datetime-local';
+                } elseif (in_array($type, ['image', 'file'])) {
+                    $inputType = 'file';
+                }
+
+                if ($inputType === 'textarea') {
+                    $valueBinding = $isEdit
+                        ? "{{ old('$colName', \${$modelVariable}->$colName) }}"
+                        : "{{ old('$colName') }}";
+
+                    $fieldBlade = <<<HTML
+    <textarea class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" rows="4">$valueBinding</textarea>
+    HTML;
+                } elseif ($inputType === 'checkbox') {
+                    $checkedBinding = $isEdit
+                        ? "{{ old('$colName', \${$modelVariable}->$colName) ? 'checked' : '' }}"
+                        : "{{ old('$colName') ? 'checked' : '' }}";
+
+                    $fieldBlade = <<<HTML
+    <input type="checkbox" class="form-check-input @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="1" $checkedBinding>
+    HTML;
+                } elseif ($inputType === 'file') {
+                    $fieldBlade = <<<HTML
+    <input type="file" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName">
+    HTML;
+                } else {
+                    $valueBinding = $isEdit
+                        ? "{{ old('$colName', \${$modelVariable}->$colName) }}"
+                        : "{{ old('$colName') }}";
+
+                    $fieldBlade = <<<HTML
+    <input type="$inputType" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="$valueBinding">
+    HTML;
+                }
+
+                $inputs .= <<<HTML
+
+    <div class="mb-3">
+        <label for="$colName" class="form-label">$label</label>
+        $fieldBlade
+        @error('$colName')
+            <div class="invalid-feedback">{{ \$message }}</div>
+        @enderror
+    </div>
+    HTML;
             }
+            return $inputs;
+        };
 
-            if ($inputType === 'textarea') {
-                $fieldBlade = <<<HTML
-<textarea class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" rows="4">{{ old('$colName') }}</textarea>
-HTML;
-            } elseif ($inputType === 'checkbox') {
-                $fieldBlade = <<<HTML
-<input type="checkbox" class="form-check-input @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="1" {{ old('$colName') ? 'checked' : '' }}>
-HTML;
-            } elseif ($inputType === 'file') {
-                $fieldBlade = <<<HTML
-<input type="file" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName">
-HTML;
-            } else {
-                $fieldBlade = <<<HTML
-<input type="$inputType" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="{{ old('$colName') }}">
-HTML;
-            }
-
-            $createInputs .= <<<HTML
-
-<div class="mb-3">
-    <label for="$colName" class="form-label">$label</label>
-    $fieldBlade
-    @error('$colName')
-        <div class="invalid-feedback">{{ \$message }}</div>
-    @enderror
-</div>
-HTML;
-        }
+        // --- Create View ---
+        $createInputs = $generateInputs(false);
 
         $createView = <<<BLADE
-@extends('admin.layouts.master')
+    @extends('admin.layouts.master')
 
-@section('body')
-<div class="content">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Create $modelName</h4>
-                </div>
-                <div class="card-body">
-                    <form action="{{ route('$tableName.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        $createInputs
-                        <button type="submit" class="btn btn-primary">Save</button>
-                        <a href="{{ route('$tableName.index') }}" class="btn btn-secondary">Cancel</a>
-                    </form>
+    @section('body')
+    <div class="content">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Create $modelName</h4>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ route('$tableName.store') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            $createInputs
+                            <button type="submit" class="btn btn-primary">Save</button>
+                            <a href="{{ route('$tableName.index') }}" class="btn btn-secondary">Cancel</a>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-@endsection
-BLADE;
+    @endsection
+    BLADE;
+
+        // --- Edit View ---
+        $editInputs = $generateInputs(true);
+
+        $editView = <<<BLADE
+    @extends('admin.layouts.master')
+
+    @section('body')
+    <div class="content">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Edit $modelName</h4>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ route('$tableName.update', \${$modelVariable}) }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            @method('PUT')
+                            $editInputs
+                            <button type="submit" class="btn btn-primary">Update</button>
+                            <a href="{{ route('$tableName.index') }}" class="btn btn-secondary">Cancel</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endsection
+    BLADE;
 
         return [
             'index' => $indexView,
             'create' => $createView,
+            'edit' => $editView,
         ];
     }
 
     protected function generateRoutes(string $tableName, string $controllerName): string
     {
-        return "Route::resource('$tableName', $controllerName::class)->middleware('auth');";
+        return "Route::resource('$tableName', \\App\\Http\\Controllers\\$controllerName::class)->middleware('auth',TrackUserActivity::class);";
+    }
+
+    protected function addMenuAndPermissions($moduleName)
+    {
+        // $module = 'crud-generator'; eg .
+        $module = Str::snake($moduleName); // ensure singular and snake_case
+        $modulePermission = Str::snake(Str::singular($moduleName)); // ensure singular and snake_case
+        $actions = ['create', 'index', 'update', 'delete'];
+
+        // === 2. Create Super Admin Role ===
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super-admin']);
+
+        // === 3. Create Permissions and assign to super-admin ===
+        
+            foreach ($actions as $action) {
+                $permission = \Spatie\Permission\Models\Permission::firstOrCreate([
+                    'name' => "{$module}-{$action}",
+                ]);
+                $adminRole->givePermissionTo($permission);
+            }
+
+        // === 4. Create Menu ===
+
+        Menu::firstOrCreate([
+                'title' => ucfirst($moduleName),
+                'route' => "{$module}",
+                'permission_name' => "{$modulePermission}-index",
+                'parent_id' => null,
+            ], [
+                'icon' => 'fa fa-bars',
+                'order' => 0,
+            ]);
     }
 }

@@ -44,6 +44,7 @@ class CrudGeneratorController extends Controller
             'columns.*.required' => ['sometimes', 'boolean'],
             'columns.*.foreign_table' => ['nullable', 'string', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/'],
             'columns.*.foreign_column' => ['nullable', 'string', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/'],
+            'columns.*.foreign_column_title' => ['nullable', 'string', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/'],
         ]);
 
         // Extra logic: if foreign_column is set, foreign_table must be set too

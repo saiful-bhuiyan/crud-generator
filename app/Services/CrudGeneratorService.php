@@ -157,38 +157,57 @@ PHP;
 
     protected function generateModel(string $modelName, string $tableName, array $columns): string
     {
-        $fillable = [];
+        // Prepare guarded and relationship methods
+        $relations = [];
+
         foreach ($columns as $col) {
-            $fillable[] = "'{$col['name']}'";
+            // Add relationship only if foreign_table and foreign_column are present
+            if (!empty($col['foreign_table']) && !empty($col['foreign_column'])) {
+                $relationName = Str::camel(Str::singular($col['foreign_table']));
+                $relatedModel = Str::studly(Str::singular($col['foreign_table']));
+
+                $relations[] = <<<PHP
+
+        public function $relationName()
+        {
+            return \$this->belongsTo(\\App\\Models\\$relatedModel::class, '{$col['name']}', '{$col['foreign_column']}');
         }
-        $fillableStr = implode(", ", $fillable);
+    PHP;
+            }
+        }
+
+        $relationsStr = implode("\n", $relations);
 
         return <<<PHP
-<?php
+    <?php
 
-namespace App\Models;
+    namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+    use Illuminate\Database\Eloquent\Factories\HasFactory;
+    use Illuminate\Database\Eloquent\Model;
 
-class $modelName extends Model
-{
-    use HasFactory;
+    class $modelName extends Model
+    {
+        use HasFactory;
 
-    protected \$table = '$tableName';
+        protected \$table = '$tableName';
 
-    protected \$fillable = [
-        $fillableStr
-    ];
-}
-PHP;
+        protected \$guarded = [];
+    $relationsStr
+    }
+    PHP;
     }
 
     protected function generateController(string $modelName, string $controllerName, string $tableName, array $columns): string
     {
         $permissionBase = Str::snake($modelName);
         $modelVariable = Str::camel($modelName);
+
         $validationRules = [];
+        $storeUpdateFields = [];
+        $relatedModels = [];
+        $relatedViewData = [];
+
         foreach ($columns as $col) {
             $rule = $col['required'] ? 'required' : 'nullable';
             $typeRule = match($col['type']) {
@@ -203,105 +222,143 @@ PHP;
                 'image', 'file' => 'file',
                 default => 'string',
             };
-            $validationRules[] = "'{$col['name']}' => '$rule|$typeRule'";
-        }
-        $validationStr = implode(",\n            ", $validationRules);
 
-        $storeUpdateFields = [];
-        foreach ($columns as $col) {
+            $validationRules[] = "'{$col['name']}' => '$rule|$typeRule'";
             $storeUpdateFields[] = "'{$col['name']}' => \$request->input('{$col['name']}'),";
+
+            // Track related models if it's a foreign key
+            if (!empty($col['foreign_table']) && !empty($col['foreign_column'])) {
+                $relatedModelName = Str::studly(Str::singular($col['foreign_table']));
+                $relatedVarName = Str::camel(Str::plural($relatedModelName));
+
+                $relatedModels[$relatedModelName] = "use App\Models\\$relatedModelName;";
+                $relatedViewData[$relatedVarName] = "\$$relatedVarName = $relatedModelName::all();";
+            }
         }
+
+        $validationStr = implode(",\n            ", $validationRules);
         $storeUpdateFieldsStr = implode("\n            ", $storeUpdateFields);
+        $relatedUses = implode("\n", $relatedModels);
+        $relatedCreateViewVars = implode("\n        ", $relatedViewData);
+        $relatedEditViewVars = implode("\n        ", $relatedViewData);
+
+        // Build associative array for view data
+        $relatedCreateAssocArray = implode(",\n            ", array_map(
+            fn($var) => "'$var' => \$$var", array_keys($relatedViewData)
+        ));
+
+        $relatedEditAssocArray = $relatedCreateAssocArray
+            ? "$relatedCreateAssocArray,\n            '$modelVariable' => \$$modelVariable"
+            : "'$modelVariable' => \$$modelVariable";
 
         return <<<PHP
-<?php
+    <?php
 
-namespace App\Http\Controllers;
+    namespace App\Http\Controllers;
 
-use App\Models\\$modelName;
-use Illuminate\Http\Request;
+    use App\Models\\$modelName;
+    $relatedUses
+    use Illuminate\Http\Request;
 
-class $controllerName extends Controller
-{
-
-    public function __construct()
+    class $controllerName extends Controller
     {
-        \$this->middleware('permission:{$permissionBase}-index')->only('index');
-        \$this->middleware('permission:{$permissionBase}-create')->only(['create', 'store']);
-        \$this->middleware('permission:{$permissionBase}-update')->only(['edit', 'update']);
-        \$this->middleware('permission:{$permissionBase}-delete')->only('destroy');
+        public function __construct()
+        {
+            \$this->middleware('permission:{$permissionBase}-index')->only('index');
+            \$this->middleware('permission:{$permissionBase}-create')->only(['create', 'store']);
+            \$this->middleware('permission:{$permissionBase}-update')->only(['edit', 'update']);
+            \$this->middleware('permission:{$permissionBase}-delete')->only('destroy');
+        }
+
+        public function index()
+        {
+            \${$modelVariable}s = $modelName::paginate(10);
+            return view('$tableName.index', ['{$modelVariable}s' => \${$modelVariable}s]);
+        }
+
+        public function create()
+        {
+            $relatedCreateViewVars
+            return view('$tableName.create', [
+                $relatedCreateAssocArray
+            ]);
+        }
+
+        public function store(Request \$request)
+        {
+            \$request->validate([
+                $validationStr
+            ]);
+
+            $modelName::create([
+                $storeUpdateFieldsStr
+            ]);
+
+            return redirect()->route('$tableName.index')->with('success', '$modelName created successfully.');
+        }
+
+        public function show($modelName \${$modelVariable})
+        {
+            return view('$tableName.show', ['{$modelVariable}' => \${$modelVariable}]);
+        }
+
+        public function edit($modelName \${$modelVariable})
+        {
+            $relatedEditViewVars
+            return view('$tableName.edit', [
+                $relatedEditAssocArray
+            ]);
+        }
+
+        public function update(Request \$request, $modelName \${$modelVariable})
+        {
+            \$request->validate([
+                $validationStr
+            ]);
+
+            \${$modelVariable}->update([
+                $storeUpdateFieldsStr
+            ]);
+
+            return redirect()->route('$tableName.index')->with('success', '$modelName updated successfully.');
+        }
+
+        public function destroy($modelName \${$modelVariable})
+        {
+            \${$modelVariable}->delete();
+            return redirect()->route('$tableName.index')->with('success', '$modelName deleted successfully.');
+        }
     }
-        
-    public function index()
-    {
-        \${$modelVariable}s = $modelName::paginate(10);
-        return view('$tableName.index', compact('{$modelVariable}s'));
-    }
-
-    public function create()
-    {
-        return view('$tableName.create');
-    }
-
-    public function store(Request \$request)
-    {
-        \$request->validate([
-            $validationStr
-        ]);
-
-        $modelName::create([
-            $storeUpdateFieldsStr
-        ]);
-
-        return redirect()->route('$tableName.index')->with('success', '$modelName created successfully.');
-    }
-
-    public function show($modelName \${$modelVariable})
-    {
-        return view('$tableName.show', compact('{$modelVariable}'));
-    }
-
-    public function edit($modelName \${$modelVariable})
-    {
-        return view('$tableName.edit', compact('{$modelVariable}'));
-    }
-
-    public function update(Request \$request, $modelName \${$modelVariable})
-    {
-        \$request->validate([
-            $validationStr
-        ]);
-
-        \${$modelVariable}->update([
-            $storeUpdateFieldsStr
-        ]);
-
-        return redirect()->route('$tableName.index')->with('success', '$modelName updated successfully.');
-    }
-
-    public function destroy($modelName \${$modelVariable})
-    {
-        \${$modelVariable}->delete();
-        return redirect()->route('$tableName.index')->with('success', '$modelName deleted successfully.');
-    }
-}
-PHP;
+    PHP;
     }
 
     protected function generateViews(string $modelName, string $modelVariable, string $tableName, array $columns): array
     {
-        // --- Index View ---
-
         $tableHeaders = '';
         $tableBody = '';
         $permissionBase = Str::snake($modelName);
         $countCols = count($columns);
+
         foreach ($columns as $col) {
-            $label = ucfirst(str_replace('_', ' ', $col['name']));
+
+            if (isset($col['foreign_table']) && isset($col['foreign_column']) && isset($col['foreign_column_title'])) {
+                $label = ucfirst(str_replace('_id', '', $col['name']));
+                $label = ucfirst(str_replace('_', ' ', $col['name']));
+
+                $relationMethod = Str::camel(str_replace('_id', '', $col['name']));
+                $relationLabel = $col['foreign_column_title'];
+                $tableBody .= "<td>{{ \${$modelVariable}Item->{$relationMethod}?->{$relationLabel} }}</td>\n                            ";
+            } else {
+                $label = ucfirst(str_replace('_', ' ', $col['name']));
+
+                $tableBody .= "<td>{{ \${$modelVariable}Item->{$col['name']} }}</td>\n                            ";
+            }
+
             $tableHeaders .= "<th>$label</th>\n                            ";
-            $tableBody .= "<td>{{ \${$modelVariable}Item->{$col['name']} }}</td>\n                            ";
+
         }
 
+        // --- Index View ---
         $indexView = <<<BLADE
     @extends('admin.layouts.master')
 
@@ -361,7 +418,7 @@ PHP;
     @endsection
     BLADE;
 
-        // --- Form Inputs Generator (for create & edit) ---
+        // --- Form Inputs Generator ---
         $generateInputs = function($isEdit = false) use ($columns, $modelVariable) {
             $inputs = '';
             foreach ($columns as $col) {
@@ -369,70 +426,90 @@ PHP;
                 $label = ucfirst(str_replace('_', ' ', $colName));
                 $type = $col['type'];
 
-                $inputType = 'text';
-                if (in_array($type, ['text'])) {
-                    $inputType = 'textarea';
-                } elseif (in_array($type, ['integer', 'unsignedBigInteger'])) {
-                    $inputType = 'number';
-                } elseif (in_array($type, ['double', 'float'])) {
-                    $inputType = 'number" step="any';
-                } elseif ($type === 'boolean') {
-                    $inputType = 'checkbox';
-                } elseif ($type === 'date') {
-                    $inputType = 'date';
-                } elseif ($type === 'datetime') {
-                    $inputType = 'datetime-local';
-                } elseif (in_array($type, ['image', 'file'])) {
-                    $inputType = 'file';
-                }
-
-                if ($inputType === 'textarea') {
-                    $valueBinding = $isEdit
-                        ? "{{ old('$colName', \${$modelVariable}->$colName) }}"
-                        : "{{ old('$colName') }}";
+                // If relation, generate <select>
+                if (isset($col['foreign_table'], $col['foreign_column'], $col['foreign_column_title'])) {
+                    $relationVar = Str::camel(Str::plural($col['foreign_table']));
+                    $relationLabel = $col['foreign_column_title'];
+                    $selectLabel = ucfirst(str_replace('_', ' ', str_replace('_id', '', $col['name'])));
 
                     $fieldBlade = <<<HTML
-    <textarea class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" rows="4">$valueBinding</textarea>
-    HTML;
-                } elseif ($inputType === 'checkbox') {
-                    $checkedBinding = $isEdit
-                        ? "{{ old('$colName', \${$modelVariable}->$colName) ? 'checked' : '' }}"
-                        : "{{ old('$colName') ? 'checked' : '' }}";
-
-                    $fieldBlade = <<<HTML
-    <input type="checkbox" class="form-check-input @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="1" $checkedBinding>
-    HTML;
-                } elseif ($inputType === 'file') {
-                    $fieldBlade = <<<HTML
-    <input type="file" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName">
-    HTML;
+                    <label for="$colName" class="form-label">$selectLabel</label>
+                    <select class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName">
+                        <option value="">Select $selectLabel</option>
+                        @foreach(\$$relationVar as \$item)
+                            <option value="{{ \$item->id }}"
+                                @if(old('$colName', isset(\${$modelVariable}) ? \${$modelVariable}->$colName : null) == \$item->id) selected @endif>
+                                {{ \$item->$relationLabel }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('$colName')
+                        <div class="invalid-feedback">{{ \$message }}</div>
+                    @enderror
+                    HTML;
                 } else {
-                    $valueBinding = $isEdit
-                        ? "{{ old('$colName', \${$modelVariable}->$colName) }}"
-                        : "{{ old('$colName') }}";
+                    // Input field type logic
+                    $inputType = 'text';
+                    if ($type === 'text') $inputType = 'textarea';
+                    elseif (in_array($type, ['integer', 'unsignedBigInteger'])) $inputType = 'number';
+                    elseif (in_array($type, ['double', 'float'])) $inputType = 'number" step="any';
+                    elseif ($type === 'boolean') $inputType = 'checkbox';
+                    elseif ($type === 'date') $inputType = 'date';
+                    elseif ($type === 'datetime') $inputType = 'datetime-local';
+                    elseif (in_array($type, ['image', 'file'])) $inputType = 'file';
 
-                    $fieldBlade = <<<HTML
-    <input type="$inputType" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="$valueBinding">
-    HTML;
+                    if ($inputType === 'textarea') {
+                        $value = $isEdit ? "{{ old('$colName', \${$modelVariable}->$colName) }}" : "{{ old('$colName') }}";
+                        $fieldBlade = <<<HTML
+                        <label for="$colName" class="form-label">$label</label>
+                        <textarea class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" rows="4">$value</textarea>
+                        @error('$colName')
+                            <div class="invalid-feedback">{{ \$message }}</div>
+                        @enderror
+                        HTML;
+                    } elseif ($inputType === 'checkbox') {
+                        $checked = $isEdit ? "{{ old('$colName', \${$modelVariable}->$colName) ? 'checked' : '' }}" : "{{ old('$colName') ? 'checked' : '' }}";
+                        $fieldBlade = <<<HTML
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="1" $checked>
+                            <label for="$colName" class="form-check-label">$label</label>
+                            @error('$colName')
+                                <div class="invalid-feedback">{{ \$message }}</div>
+                            @enderror
+                        </div>
+                        HTML;
+                    } elseif ($inputType === 'file') {
+                        $fieldBlade = <<<HTML
+                        <label for="$colName" class="form-label">$label</label>
+                        <input type="file" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName">
+                        @error('$colName')
+                            <div class="invalid-feedback">{{ \$message }}</div>
+                        @enderror
+                        HTML;
+                    } else {
+                        $value = $isEdit ? "{{ old('$colName', \${$modelVariable}->$colName) }}" : "{{ old('$colName') }}";
+                        $fieldBlade = <<<HTML
+                        <label for="$colName" class="form-label">$label</label>
+                        <input type="$inputType" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="$value">
+                        @error('$colName')
+                            <div class="invalid-feedback">{{ \$message }}</div>
+                        @enderror
+                        HTML;
+                    }
                 }
 
                 $inputs .= <<<HTML
 
-    <div class="mb-3">
-        <label for="$colName" class="form-label">$label</label>
-        $fieldBlade
-        @error('$colName')
-            <div class="invalid-feedback">{{ \$message }}</div>
-        @enderror
-    </div>
-    HTML;
+                <div class="form-group">
+                    $fieldBlade
+                </div>
+                HTML;
             }
             return $inputs;
         };
 
         // --- Create View ---
         $createInputs = $generateInputs(false);
-
         $createView = <<<BLADE
     @extends('admin.layouts.master')
 
@@ -461,7 +538,6 @@ PHP;
 
         // --- Edit View ---
         $editInputs = $generateInputs(true);
-
         $editView = <<<BLADE
     @extends('admin.layouts.master')
 
@@ -515,7 +591,7 @@ PHP;
         
             foreach ($actions as $action) {
                 $permission = \Spatie\Permission\Models\Permission::firstOrCreate([
-                    'name' => "{$module}-{$action}",
+                    'name' => "{$modulePermission}-{$action}",
                 ]);
                 $adminRole->givePermissionTo($permission);
             }

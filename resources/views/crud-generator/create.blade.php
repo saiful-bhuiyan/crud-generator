@@ -47,12 +47,15 @@
                                 <div class="col-md-2">
                                     <input type="text" name="columns[0][foreign_column]" class="form-control" placeholder="Foreign Column (optional)">
                                 </div>
+                                <div class="col-md-1">
+                                    <input type="text" name="columns[0][foreign_column_title]" class="form-control" placeholder="Foreign Column Title (optional)">
+                                </div>
                                 <div class="col-md-1 text-center">
                                     <input type="hidden" name="columns[0][required]" value="0">
                                     <input type="checkbox" name="columns[0][required]" value="1" id="required_0">
                                     <label for="required_0" class="mb-0">Required</label>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-1">
                                     <button type="button" class="btn btn-danger btn-sm remove-column">X</button>
                                 </div>
                             </div>
@@ -99,12 +102,15 @@
             <div class="col-md-2">
                 <input type="text" name="columns[${columnIndex}][foreign_column]" class="form-control" placeholder="Foreign Column (optional)">
             </div>
+             <div class="col-md-1">
+                <input type="text" name="columns[${columnIndex}][foreign_column_title]" class="form-control" placeholder="Foreign Column Title (optional)">
+            </div>
             <div class="col-md-1 text-center">
                 <input type="hidden" name="columns[${columnIndex}][required]" value="0">
                 <input type="checkbox" name="columns[${columnIndex}][required]" value="1" id="required_${columnIndex}">
                 <label for="required_${columnIndex}" class="mb-0">Required</label>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <button type="button" class="btn btn-danger btn-sm remove-column">X</button>
             </div>
         `;

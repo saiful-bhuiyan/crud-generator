@@ -12,9 +12,7 @@
                     @endcan
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
+                    @include('components.alerts')
 
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped align-middle">

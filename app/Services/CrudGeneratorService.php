@@ -11,7 +11,7 @@ class CrudGeneratorService
      * Generate full CRUD scaffold code for a given table name and columns.
      *
      * @param string $tableName
-     * @param array $columns Array of columns, each as ['name'=>string, 'type'=>string, 'required'=>bool, ...]
+     * @param array $columns Array of columns, each as ['name'=>string, 'type'=>string, 'required'=>bool, 'show_in_table'=>bool ...]
      * @return array Associative array with keys: migration, model, controller, views (index, create), routes
      */
     public function generate(string $tableName, array $columns): array
@@ -98,7 +98,7 @@ class CrudGeneratorService
                     $fields .= "\$table->double('$name')$nullable;\n            ";
                     break;
                 case 'boolean':
-                    $fields .= "\$table->boolean('$name')->default(false);\n            ";
+                    $fields .= "\$table->boolean('$name')->default(true);\n            ";
                     break;
                 case 'date':
                     $fields .= "\$table->date('$name')$nullable;\n            ";
@@ -204,7 +204,8 @@ PHP;
         $modelVariable = Str::camel($modelName);
 
         $validationRules = [];
-        $storeUpdateFields = [];
+        $storeFields = [];
+        $updateFields = [];
         $relatedModels = [];
         $relatedViewData = [];
 
@@ -224,7 +225,19 @@ PHP;
             };
 
             $validationRules[] = "'{$col['name']}' => '$rule|$typeRule'";
-            $storeUpdateFields[] = "'{$col['name']}' => \$request->input('{$col['name']}'),";
+
+            if (in_array($col['type'], ['image', 'file'])) {
+                $storeFields[] = "'{$col['name']}' => \$request->file('{$col['name']}') ? upload_asset(\$request->file('{$col['name']}')) : null,";
+                $updateFields[] = <<<PHP
+                if (\$request->hasFile('{$col['name']}')) {
+                    delete_uploaded_asset(\${$modelVariable}->{$col['name']});
+                    \$data['{$col['name']}'] = upload_asset(\$request->file('{$col['name']}'));
+                }
+                PHP;
+            } else {
+                $storeFields[] = "'{$col['name']}' => \$request->input('{$col['name']}'),";
+                $updateFields[] = "\$data['{$col['name']}'] = \$request->input('{$col['name']}');";
+            }
 
             // Track related models if it's a foreign key
             if (!empty($col['foreign_table']) && !empty($col['foreign_column'])) {
@@ -237,12 +250,13 @@ PHP;
         }
 
         $validationStr = implode(",\n            ", $validationRules);
-        $storeUpdateFieldsStr = implode("\n            ", $storeUpdateFields);
+        $storeFieldsStr = implode("\n                ", $storeFields);
+        $updateFieldsStr = implode("\n            ", $updateFields);
+
         $relatedUses = implode("\n", $relatedModels);
         $relatedCreateViewVars = implode("\n        ", $relatedViewData);
         $relatedEditViewVars = implode("\n        ", $relatedViewData);
 
-        // Build associative array for view data
         $relatedCreateAssocArray = implode(",\n            ", array_map(
             fn($var) => "'$var' => \$$var", array_keys($relatedViewData)
         ));
@@ -272,8 +286,8 @@ PHP;
 
         public function index()
         {
-            \${$modelVariable}s = $modelName::paginate(10);
-            return view('$tableName.index', ['{$modelVariable}s' => \${$modelVariable}s]);
+            \${$modelVariable}Lists = $modelName::paginate(10);
+            return view('$tableName.index', ['{$modelVariable}Lists' => \${$modelVariable}Lists]);
         }
 
         public function create()
@@ -291,7 +305,7 @@ PHP;
             ]);
 
             $modelName::create([
-                $storeUpdateFieldsStr
+                    $storeFieldsStr
             ]);
 
             return redirect()->route('$tableName.index')->with('success', '$modelName created successfully.');
@@ -316,9 +330,10 @@ PHP;
                 $validationStr
             ]);
 
-            \${$modelVariable}->update([
-                $storeUpdateFieldsStr
-            ]);
+            \$data = [];
+            $updateFieldsStr
+
+            \${$modelVariable}->update(\$data);
 
             return redirect()->route('$tableName.index')->with('success', '$modelName updated successfully.');
         }
@@ -341,21 +356,26 @@ PHP;
 
         foreach ($columns as $col) {
 
-            if (isset($col['foreign_table']) && isset($col['foreign_column']) && isset($col['foreign_column_title'])) {
-                $label = ucfirst(str_replace('_id', '', $col['name']));
-                $label = ucfirst(str_replace('_', ' ', $col['name']));
+            if($col['show_in_table']) {
+                if (isset($col['foreign_table']) && isset($col['foreign_column']) && isset($col['foreign_column_title'])) {
+                    $label = ucfirst(str_replace('_id', '', $col['name']));
+                    $label = ucfirst(str_replace('_', ' ', $col['name']));
 
-                $relationMethod = Str::camel(str_replace('_id', '', $col['name']));
-                $relationLabel = $col['foreign_column_title'];
-                $tableBody .= "<td>{{ \${$modelVariable}Item->{$relationMethod}?->{$relationLabel} }}</td>\n                            ";
-            } else {
-                $label = ucfirst(str_replace('_', ' ', $col['name']));
+                    $relationMethod = Str::camel(str_replace('_id', '', $col['name']));
+                    $relationLabel = $col['foreign_column_title'];
+                    $tableBody .= "<td>{{ \${$modelVariable}Item->{$relationMethod}?->{$relationLabel} }}</td>\n                            ";
+                } elseif(in_array($col['type'],['image','file'])) {
+                    $label = ucfirst(str_replace('_', ' ', $col['name']));
 
-                $tableBody .= "<td>{{ \${$modelVariable}Item->{$col['name']} }}</td>\n                            ";
+                    $tableBody .= "<td><img src=\"{{ \${$modelVariable}Item->{$col['name']} }}\" alt=\"$label\" style=\"max-width:80px; max-height:80px;\"></td>\n                            ";
+                } else {
+                    $label = ucfirst(str_replace('_', ' ', $col['name']));
+
+                    $tableBody .= "<td>{{ \${$modelVariable}Item->{$col['name']} }}</td>\n                            ";
+                }
+
+                $tableHeaders .= "<th>$label</th>\n                            ";
             }
-
-            $tableHeaders .= "<th>$label</th>\n                            ";
-
         }
 
         // --- Index View ---
@@ -386,7 +406,7 @@ PHP;
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse(\${$modelVariable}s as \${$modelVariable}Item)
+                                    @forelse(\${$modelVariable}Lists as \${$modelVariable}Item)
                                         <tr>
                                             <td>{{ \$loop->iteration }}</td>
                                             $tableBody
@@ -409,7 +429,7 @@ PHP;
                                 </tbody>
                             </table>
                         </div>
-                        {{ \${$modelVariable}s->links() }}
+                        {{ \${$modelVariable}Lists->links() }}
                     </div>
                 </div>
             </div>
@@ -450,13 +470,21 @@ PHP;
                 } else {
                     // Input field type logic
                     $inputType = 'text';
-                    if ($type === 'text') $inputType = 'textarea';
-                    elseif (in_array($type, ['integer', 'unsignedBigInteger'])) $inputType = 'number';
-                    elseif (in_array($type, ['double', 'float'])) $inputType = 'number" step="any';
-                    elseif ($type === 'boolean') $inputType = 'checkbox';
-                    elseif ($type === 'date') $inputType = 'date';
-                    elseif ($type === 'datetime') $inputType = 'datetime-local';
-                    elseif (in_array($type, ['image', 'file'])) $inputType = 'file';
+                    if (in_array($type, ['image', 'file'])) {
+                        $inputType = 'file';
+                    } elseif ($type === 'text') {
+                        $inputType = 'textarea';
+                    } elseif (in_array($type, ['integer', 'unsignedBigInteger'])) {
+                        $inputType = 'number';
+                    } elseif (in_array($type, ['double', 'float'])) {
+                        $inputType = 'number" step="any';
+                    } elseif ($type === 'boolean') {
+                        $inputType = 'checkbox';
+                    } elseif ($type === 'date') {
+                        $inputType = 'date';
+                    } elseif ($type === 'datetime') {
+                        $inputType = 'datetime-local';
+                    }
 
                     if ($inputType === 'textarea') {
                         $value = $isEdit ? "{{ old('$colName', \${$modelVariable}->$colName) }}" : "{{ old('$colName') }}";
@@ -565,10 +593,66 @@ PHP;
     @endsection
     BLADE;
 
+        // --- Show View ---
+        $showFields = '';
+        foreach ($columns as $col) {
+            $label = ucfirst(str_replace('_', ' ', $col['name']));
+            if (isset($col['foreign_table'], $col['foreign_column'], $col['foreign_column_title'])) {
+                $relationMethod = Str::camel(str_replace('_id', '', $col['name']));
+                $relationLabel = $col['foreign_column_title'];
+                $showFields .= <<<HTML
+                <tr>
+                    <th>$label</th>
+                    <td>{{ \${$modelVariable}->{$relationMethod}?->{$relationLabel} }}</td>
+                </tr>
+                HTML;
+                        } elseif (in_array($col['type'], ['image', 'file'])) {
+                            $showFields .= <<<HTML
+                <tr>
+                    <th>$label</th>
+                    <td><img src="{{ \${$modelVariable}->{$col['name']} }}" alt="$label" style="max-width:100px;"></td>
+                </tr>
+                HTML;
+                        } else {
+                            $showFields .= <<<HTML
+                <tr>
+                    <th>$label</th>
+                    <td>{{ \${$modelVariable}->{$col['name']} }}</td>
+                </tr>
+                HTML;
+            }
+        }
+
+        $showView = <<<BLADE
+        @extends('admin.layouts.master')
+
+        @section('body')
+        <div class="content">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Show $modelName</h4>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered">
+                                $showFields
+                            </table>
+                            <a href="{{ route('$tableName.index') }}" class="btn btn-secondary">Back</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endsection
+    BLADE;
+
+
         return [
             'index' => $indexView,
             'create' => $createView,
             'edit' => $editView,
+            'show' => $showView,
         ];
     }
 

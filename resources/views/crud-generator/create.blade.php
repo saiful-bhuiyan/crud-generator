@@ -25,7 +25,7 @@
                         <div id="columns">
                             <div class="column-group mb-3 border rounded p-2">
                                 <div class="row mb-2">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <input type="text" name="columns[0][name]" class="form-control" placeholder="Column Name" required>
                                     </div>
                                     <div class="col-md-4">
@@ -42,23 +42,28 @@
                                             <option value="image">image</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <input type="text" name="columns[0][foreign_table]" class="form-control" placeholder="Foreign Table (optional)">
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <input type="text" name="columns[0][foreign_column]" class="form-control" placeholder="Foreign Column (optional)">
                                     </div>
                                     <div class="col-md-3">
                                         <input type="text" name="columns[0][foreign_column_title]" class="form-control" placeholder="Foreign Column Title (optional)">
                                     </div>
                                     <div class="col-md-2 d-flex align-items-center">
+                                        <input type="hidden" name="columns[0][show_in_table]" value="0">
+                                        <input type="checkbox" name="columns[0][show_in_table]" value="1" id="show_in_table_0" class="me-1">
+                                        <label for="show_in_table_0" class="mb-0">Show In Table?</label>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-center">
                                         <input type="hidden" name="columns[0][required]" value="0">
                                         <input type="checkbox" name="columns[0][required]" value="1" id="required_0" class="me-1">
-                                        <label for="required_0" class="mb-0">Required</label>
+                                        <label for="required_0" class="mb-0">Required?</label>
                                     </div>
-                                    <div class="col-md-3 text-end">
+                                    <div class="col-md-2 text-end">
                                         <button type="button" class="btn btn-danger btn-sm remove-column">X</button>
                                     </div>
                                 </div>
@@ -84,7 +89,7 @@
         row.classList.add('column-group', 'mb-3', 'border', 'rounded', 'p-2');
         row.innerHTML = `
             <div class="row mb-2">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <input type="text" name="columns[${columnIndex}][name]" class="form-control" placeholder="Column Name" required>
                 </div>
                 <div class="col-md-4">
@@ -101,23 +106,28 @@
                         <option value="image">image</option>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <input type="text" name="columns[${columnIndex}][foreign_table]" class="form-control" placeholder="Foreign Table (optional)">
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <input type="text" name="columns[${columnIndex}][foreign_column]" class="form-control" placeholder="Foreign Column (optional)">
                 </div>
                 <div class="col-md-3">
                     <input type="text" name="columns[${columnIndex}][foreign_column_title]" class="form-control" placeholder="Foreign Column Title (optional)">
                 </div>
                 <div class="col-md-2 d-flex align-items-center">
+                    <input type="hidden" name="columns[${columnIndex}][show_in_table]" value="0">
+                    <input type="checkbox" name="columns[${columnIndex}][show_in_table]" value="1" id="show_in_table_${columnIndex}" class="me-1">
+                    <label for="show_in_table_${columnIndex}" class="mb-0">Show In Table?</label>
+                </div>
+                <div class="col-md-2 d-flex align-items-center">
                     <input type="hidden" name="columns[${columnIndex}][required]" value="0">
                     <input type="checkbox" name="columns[${columnIndex}][required]" value="1" id="required_${columnIndex}" class="me-1">
-                    <label for="required_${columnIndex}" class="mb-0">Required</label>
+                    <label for="required_${columnIndex}" class="mb-0">Required?</label>
                 </div>
-                <div class="col-md-3 text-end">
+                <div class="col-md-2 text-end">
                     <button type="button" class="btn btn-danger btn-sm remove-column">X</button>
                 </div>
             </div>

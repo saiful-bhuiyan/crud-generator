@@ -28,7 +28,7 @@
                                     <div class="col-md-3">
                                         <input type="text" name="columns[0][name]" class="form-control" placeholder="Column Name" required>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <select name="columns[0][type]" class="form-control">
                                             <option value="string">string</option>
                                             <option value="integer">integer</option>
@@ -45,11 +45,12 @@
                                     <div class="col-md-3">
                                         <input type="text" name="columns[0][foreign_table]" class="form-control" placeholder="Foreign Table (optional)">
                                     </div>
-                                </div>
-                                <div class="row">
                                     <div class="col-md-3">
                                         <input type="text" name="columns[0][foreign_column]" class="form-control" placeholder="Foreign Column (optional)">
                                     </div>
+                                </div>
+
+                                <div class="row">
                                     <div class="col-md-3">
                                         <input type="text" name="columns[0][foreign_column_title]" class="form-control" placeholder="Foreign Column Title (optional)">
                                     </div>
@@ -62,6 +63,11 @@
                                         <input type="hidden" name="columns[0][required]" value="0">
                                         <input type="checkbox" name="columns[0][required]" value="1" id="required_0" class="me-1">
                                         <label for="required_0" class="mb-0">Required?</label>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-center">
+                                        <input type="hidden" name="columns[0][is_filter]" value="0">
+                                        <input type="checkbox" name="columns[0][is_filter]" value="1" id="is_filter_0" class="me-1">
+                                        <label for="is_filter_0" class="mb-0">Add Filter?</label>
                                     </div>
                                     <div class="col-md-2 text-end">
                                         <button type="button" class="btn btn-danger btn-sm remove-column">X</button>
@@ -92,7 +98,7 @@
                 <div class="col-md-3">
                     <input type="text" name="columns[${columnIndex}][name]" class="form-control" placeholder="Column Name" required>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <select name="columns[${columnIndex}][type]" class="form-control">
                         <option value="string">string</option>
                         <option value="integer">integer</option>
@@ -109,11 +115,11 @@
                 <div class="col-md-3">
                     <input type="text" name="columns[${columnIndex}][foreign_table]" class="form-control" placeholder="Foreign Table (optional)">
                 </div>
-            </div>
-            <div class="row">
                 <div class="col-md-3">
                     <input type="text" name="columns[${columnIndex}][foreign_column]" class="form-control" placeholder="Foreign Column (optional)">
                 </div>
+            </div>
+            <div class="row">
                 <div class="col-md-3">
                     <input type="text" name="columns[${columnIndex}][foreign_column_title]" class="form-control" placeholder="Foreign Column Title (optional)">
                 </div>
@@ -126,6 +132,11 @@
                     <input type="hidden" name="columns[${columnIndex}][required]" value="0">
                     <input type="checkbox" name="columns[${columnIndex}][required]" value="1" id="required_${columnIndex}" class="me-1">
                     <label for="required_${columnIndex}" class="mb-0">Required?</label>
+                </div>
+                <div class="col-md-2 d-flex align-items-center">
+                    <input type="hidden" name="columns[${columnIndex}][is_filter]" value="0">
+                    <input type="checkbox" name="columns[${columnIndex}][is_filter]" value="1" id="is_filter_${columnIndex}" class="me-1">
+                    <label for="is_filter_${columnIndex}" class="mb-0">Add Filter?</label>
                 </div>
                 <div class="col-md-2 text-end">
                     <button type="button" class="btn btn-danger btn-sm remove-column">X</button>

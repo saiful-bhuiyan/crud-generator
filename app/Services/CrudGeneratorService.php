@@ -209,6 +209,9 @@ PHP;
         $relatedModels = [];
         $relatedViewData = [];
 
+        $filterConditions = [];
+        $filterViewData = [];
+
         foreach ($columns as $col) {
             $rule = $col['required'] ? 'required' : 'nullable';
             $typeRule = match($col['type']) {
@@ -239,20 +242,31 @@ PHP;
                 $updateFields[] = "\$data['{$col['name']}'] = \$request->input('{$col['name']}');";
             }
 
-            // Track related models if it's a foreign key
             if (!empty($col['foreign_table']) && !empty($col['foreign_column'])) {
                 $relatedModelName = Str::studly(Str::singular($col['foreign_table']));
                 $relatedVarName = Str::camel(Str::plural($relatedModelName));
 
                 $relatedModels[$relatedModelName] = "use App\Models\\$relatedModelName;";
                 $relatedViewData[$relatedVarName] = "\$$relatedVarName = $relatedModelName::all();";
+
+            }
+
+            if($col['is_filter'])
+            {
+                // Add filter condition
+                $filterConditions[] = <<<PHP
+                if (\$request->filled('{$col['name']}')) {
+                    \$query->where('{$col['name']}', 'like', '%' . \$request->input('{$col['name']}') . '%');
+                }
+                PHP;
+
+                $filterViewData[] = "'{$col['name']}' => \$request->input('{$col['name']}')";
             }
         }
 
         $validationStr = implode(",\n            ", $validationRules);
         $storeFieldsStr = implode("\n                ", $storeFields);
         $updateFieldsStr = implode("\n            ", $updateFields);
-
         $relatedUses = implode("\n", $relatedModels);
         $relatedCreateViewVars = implode("\n        ", $relatedViewData);
         $relatedEditViewVars = implode("\n        ", $relatedViewData);
@@ -264,6 +278,11 @@ PHP;
         $relatedEditAssocArray = $relatedCreateAssocArray
             ? "$relatedCreateAssocArray,\n            '$modelVariable' => \$$modelVariable"
             : "'$modelVariable' => \$$modelVariable";
+
+        $filterConditionsStr = implode("\n", $filterConditions);
+        $filterViewParams = !empty($filterViewData)
+            ? ', ' . implode(', ', $filterViewData)
+            : '';
 
         return <<<PHP
     <?php
@@ -284,10 +303,16 @@ PHP;
             \$this->middleware('permission:{$permissionBase}-delete')->only('destroy');
         }
 
-        public function index()
+        public function index(Request \$request)
         {
-            \${$modelVariable}Lists = $modelName::paginate(10);
-            return view('$tableName.index', ['{$modelVariable}Lists' => \${$modelVariable}Lists]);
+            \$query = $modelName::query();
+    $filterConditionsStr
+
+            \${$modelVariable}Lists = \$query->paginate(10);
+            {$relatedCreateViewVars}
+            return view('$tableName.index', [
+                '{$modelVariable}Lists' => \${$modelVariable}Lists$filterViewParams
+            ]);
         }
 
         public function create()
@@ -305,7 +330,7 @@ PHP;
             ]);
 
             $modelName::create([
-                    $storeFieldsStr
+                $storeFieldsStr
             ]);
 
             return redirect()->route('$tableName.index')->with('success', '$modelName created successfully.');
@@ -353,29 +378,80 @@ PHP;
         $tableBody = '';
         $permissionBase = Str::snake($modelName);
         $countCols = count($columns);
+        $filterForm = "";
 
         foreach ($columns as $col) {
+            $name = $col['name'];
+            if (isset($col['foreign_table']) && isset($col['foreign_column']) && isset($col['foreign_column_title'])) {
+                $label = ucfirst(str_replace('_id', '', $col['name']));
+                $label = ucfirst(str_replace('_', ' ', $col['name']));
 
-            if($col['show_in_table']) {
-                if (isset($col['foreign_table']) && isset($col['foreign_column']) && isset($col['foreign_column_title'])) {
-                    $label = ucfirst(str_replace('_id', '', $col['name']));
-                    $label = ucfirst(str_replace('_', ' ', $col['name']));
+                $relationMethod = Str::camel(str_replace('_id', '', $col['name']));
+                $relatedModel = Str::studly(Str::singular($col['foreign_table']));
+                $relationLabel = $col['foreign_column_title'];
 
-                    $relationMethod = Str::camel(str_replace('_id', '', $col['name']));
-                    $relationLabel = $col['foreign_column_title'];
-                    $tableBody .= "<td>{{ \${$modelVariable}Item->{$relationMethod}?->{$relationLabel} }}</td>\n                            ";
-                } elseif(in_array($col['type'],['image','file'])) {
-                    $label = ucfirst(str_replace('_', ' ', $col['name']));
 
-                    $tableBody .= "<td><img src=\"{{ \${$modelVariable}Item->{$col['name']} }}\" alt=\"$label\" style=\"max-width:80px; max-height:80px;\"></td>\n                            ";
-                } else {
-                    $label = ucfirst(str_replace('_', ' ', $col['name']));
+                $filterFormItem = <<<BLADE
+                <div class="col-md-3 mb-2">
+                    <label for="$name">$label</label>
+                    <select name="$name" id="$name" class="form-control">
+                        <option value="">-- Select $label --</option>
+                        @foreach(\\App\\Models\\$relatedModel::get() as \$item)
+                            <option value="{{ \$item->id }}" {{ request('$name') == \$item->id ? 'selected' : '' }}>
+                                {{ \$item->$relationLabel }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                BLADE;
+                $tableBodyItem = "<td>{{ \${$modelVariable}Item->{$relationMethod}?->{$relationLabel} }}</td>\n                            ";
+            } elseif(in_array($col['type'],['image','file'])) {
+                $label = ucfirst(str_replace('_', ' ', $col['name']));
+                $filterFormItem = <<<BLADE
+                <div class="col-md-3 mb-2">
+                    <label for="$name">$label</label>
+                    <input type="text" name="$name" id="$name" class="form-control" value="{{ request('$name') }}">
+                </div>
+                BLADE;
 
-                    $tableBody .= "<td>{{ \${$modelVariable}Item->{$col['name']} }}</td>\n                            ";
-                }
+                $tableBodyItem = "<td><img src=\"{{ \${$modelVariable}Item->{$col['name']} }}\" alt=\"$label\" style=\"max-width:80px; max-height:80px;\"></td>\n                            ";
+            } else {
+                $label = ucfirst(str_replace('_', ' ', $col['name']));
 
-                $tableHeaders .= "<th>$label</th>\n                            ";
+                $filterFormItem = <<<BLADE
+                <div class="col-md-3 mb-2">
+                    <label for="$name">$label</label>
+                    <input type="text" name="$name" id="$name" class="form-control" value="{{ request('$name') }}">
+                </div>
+                BLADE;
+
+                $tableBodyItem = "<td>{{ \${$modelVariable}Item->{$col['name']} }}</td>\n                            ";
             }
+
+            if($col['is_filter']) {
+                $filterForm .= $filterFormItem;
+            }
+                
+            if($col['show_in_table']) {
+                $tableHeaders .= "<th>$label</th>\n                            ";
+                $tableBody .=  $tableBodyItem;
+            }
+        }
+
+        $filterFormHtml = '';
+        if (!empty($filterForm)) {
+            $filterFormHtml = <<<BLADE
+            <form method="GET" action="{{ route('$tableName.index') }}">
+                <div class="row">
+                    $filterForm
+                    <div class="col-md-3 mb-2 align-self-end">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                        <a href="{{ route('$tableName.index') }}" class="btn btn-secondary">Reset</a>
+                    </div>
+                </div>
+            </form>
+            <hr>
+            BLADE;
         }
 
         // --- Index View ---
@@ -395,7 +471,7 @@ PHP;
                     </div>
                     <div class="card-body">
                         @include('components.alerts')
-
+                        $filterFormHtml
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover">
                                 <thead>
@@ -411,6 +487,9 @@ PHP;
                                             <td>{{ \$loop->iteration }}</td>
                                             $tableBody
                                             <td>
+                                                @can('$permissionBase-index')
+                                                <a href="{{ route('$tableName.show', \${$modelVariable}Item) }}" class="btn btn-primary btn-sm">Show</a>
+                                                @endcan
                                                 @can('$permissionBase-update')
                                                 <a href="{{ route('$tableName.edit', \${$modelVariable}Item) }}" class="btn btn-warning btn-sm">Edit</a>
                                                 @endcan

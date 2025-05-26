@@ -253,12 +253,28 @@ PHP;
 
             if($col['is_filter'])
             {
-                // Add filter condition
-                $filterConditions[] = <<<PHP
-                if (\$request->filled('{$col['name']}')) {
-                    \$query->where('{$col['name']}', 'like', '%' . \$request->input('{$col['name']}') . '%');
+                if (in_array($col['type'], ['date', 'datetime'])) {
+                    $filterConditions[] = <<<PHP
+                    if (\$request->filled('{$col['name']}')) {
+                        \$dates = explode(' - ', \$request->input('{$col['name']}'));
+                        if (count(\$dates) === 2) {
+                        \$dates[0] = \Carbon\Carbon::parse(trim(\$dates[0]));
+                        \$dates[1] = \Carbon\Carbon::parse(trim(\$dates[1]));
+                            \$query->whereDate('{$col['name']}', '>=', \$dates[0])
+                                ->whereDate('{$col['name']}', '<=', \$dates[1]);
+                        }
+                    }
+                    PHP;
+
+                    $filterViewData[] = "'{$col['name']}' => \$request->input('{$col['name']}')";
+                } else {
+                    // Add filter condition
+                    $filterConditions[] = <<<PHP
+                    if (\$request->filled('{$col['name']}')) {
+                        \$query->where('{$col['name']}', 'like', '%' . \$request->input('{$col['name']}') . '%');
+                    }
+                    PHP;
                 }
-                PHP;
 
                 $filterViewData[] = "'{$col['name']}' => \$request->input('{$col['name']}')";
             }
@@ -415,6 +431,16 @@ PHP;
                 BLADE;
 
                 $tableBodyItem = "<td><img src=\"{{ \${$modelVariable}Item->{$col['name']} }}\" alt=\"$label\" style=\"max-width:80px; max-height:80px;\"></td>\n                            ";
+            } elseif(in_array($col['type'],['date','datetime'])) {
+                $label = ucfirst(str_replace('_', ' ', $col['name']));
+                $filterFormItem = <<<BLADE
+                <div class="col-md-3 mb-2">
+                    <label for="$name">$label</label>
+                    <input type="text" name="$name" id="$name" class="form-control datepick" value="{{ request('$name') }}">
+                </div>
+                BLADE;
+
+                $tableBodyItem = "<td>{{ formatDate(\${$modelVariable}Item->{$col['name']}) }}</td>\n                            ";
             } else {
                 $label = ucfirst(str_replace('_', ' ', $col['name']));
 

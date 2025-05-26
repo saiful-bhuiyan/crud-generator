@@ -72,3 +72,9 @@ if(!function_exists('getGeneralSetting')) {
         return $setting->value ?? null;
     }
 }
+
+if(!function_exists('formatDate')) {
+    function formatDate($date) {
+        return $date ? \Carbon\Carbon::parse($date)->format('Y-m-d') : null;
+    }
+}

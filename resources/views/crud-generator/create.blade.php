@@ -7,14 +7,14 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h2 class="mb-0">Create New CRUD Module</h2>
-                    <a href="{{ route('crud-generator.index') }}" class="btn btn-secondary btn-sm">Back to List</a>
+                    <a href="{{ route('admin.crud-generator.index') }}" class="btn btn-secondary btn-sm">Back to List</a>
                 </div>
                 <div class="card-body">
                     @if(session('error'))
                         <div class="alert alert-danger">{{ session('error') }}</div>
                     @endif
 
-                    <form action="{{ route('crud-generator.generate') }}" method="POST">
+                    <form action="{{ route('admin.crud-generator.generate') }}" method="POST">
                         @csrf
                         <div class="form-group mb-3">
                             <label for="table_name">Table Name <span class="text-danger">*</span></label>

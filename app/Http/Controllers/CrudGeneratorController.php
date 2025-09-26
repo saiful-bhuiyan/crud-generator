@@ -60,7 +60,7 @@ class CrudGeneratorController extends Controller
         $generator = new CrudGeneratorService();
         $generator->generate($validated['table_name'], $validated['columns']);
 
-        return redirect()->route('crud-generator.index')->with('success', 'Module generated successfully!');
+        return redirect()->route('admin.crud-generator.index')->with('success', 'Module generated successfully!');
     }
 
     /**

@@ -7,7 +7,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h2 class="mb-0">CRUD Modules</h2>
-                    <a href="{{ route('crud-generator.create') }}" class="btn btn-primary btn-sm">Create Module</a>
+                    <a href="{{ route('admin.crud-generator.create') }}" class="btn btn-primary btn-sm">Create Module</a>
                 </div>
                 <div class="card-body">
                     @if(session('success'))

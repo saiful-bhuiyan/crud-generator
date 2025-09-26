@@ -1,7 +1,6 @@
 <?php
 
-require base_path('routes/channels.php');
-require base_path('routes/crud.php');
+
 
 use App\Http\Controllers\CrudGeneratorController;
 use App\Http\Controllers\GeneralSettingController;
@@ -21,42 +20,52 @@ use App\Http\Middleware\TrackUserActivity;
 // });
 
 Auth::routes();
-Broadcast::routes(['middleware' => ['auth']]);
+
+
+// ✅ All admin routes grouped here
+Route::prefix('admin') ->as('admin.')->middleware(['auth', TrackUserActivity::class])->group(function () {
+
+    Broadcast::routes(['middleware' => ['auth']]);
 
 Route::get('logout',function(){
     Auth::logout();
     return redirect('/');
 });
 
-Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('dashboard');
+    // include crud.php with admin prefix
+    require base_path('routes/crud.php');
 
-Route::middleware(['auth',TrackUserActivity::class])->group(function () {
-    Route::resource('roles', RoleController::class);
-    Route::resource('permissions', PermissionController::class);
-    Route::resource('users', UserController::class);
-    Route::resource('menus', MenuController::class);
-    Route::resource('profile', ProfileController::class)->only('index','store');
-    Route::resource('general-settings', GeneralSettingController::class)->only('index','store');
-    Route::resource('crud-generator', CrudGeneratorController::class)->only('index','create');
-    Route::post('crud-generator/generate', [CrudGeneratorController::class, 'generate'])->name('crud-generator.generate');
+    Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('dashboard');
 
-    Route::get('add-new-permission',function(){
-// === 1. Define Modules and Actions ===
-        $modules = ['crud-generator'];
-        $actions = ['create', 'index', 'update', 'delete'];
+    Route::middleware(['auth',TrackUserActivity::class])->group(function () {
+        Route::resource('roles', RoleController::class);
+        Route::resource('permissions', PermissionController::class);
+        Route::resource('users', UserController::class);
+        Route::resource('menus', MenuController::class);
+        Route::resource('profile', ProfileController::class)->only('index','store');
+        Route::resource('general-settings', GeneralSettingController::class)->only('index','store');
+        Route::resource('crud-generator', CrudGeneratorController::class)->only('index','create');
+        Route::post('crud-generator/generate', [CrudGeneratorController::class, 'generate'])->name('crud-generator.generate');
 
-        // === 2. Create Super Admin Role ===
-        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super-admin']);
+        Route::get('add-new-permission',function(){
+    // === 1. Define Modules and Actions ===
+            $modules = ['crud-generator'];
+            $actions = ['create', 'index', 'update', 'delete'];
 
-        // === 3. Create Permissions and assign to super-admin ===
-        foreach ($modules as $module) {
-            foreach ($actions as $action) {
-                $permission = \Spatie\Permission\Models\Permission::firstOrCreate([
-                    'name' => "{$module}-{$action}",
-                ]);
-                $adminRole->givePermissionTo($permission);
+            // === 2. Create Super Admin Role ===
+            $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super-admin']);
+
+            // === 3. Create Permissions and assign to super-admin ===
+            foreach ($modules as $module) {
+                foreach ($actions as $action) {
+                    $permission = \Spatie\Permission\Models\Permission::firstOrCreate([
+                        'name' => "{$module}-{$action}",
+                    ]);
+                    $adminRole->givePermissionTo($permission);
+                }
             }
-        }
+        });
+
     });
 
     

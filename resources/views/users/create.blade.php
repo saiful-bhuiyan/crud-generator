@@ -9,7 +9,7 @@
                     <h2 class="mb-0">Create User</h2>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('users.store') }}">
+                    <form method="POST" action="{{ route('admin.users.store') }}">
                         @csrf
 
                         <div class="mb-3">
@@ -53,7 +53,7 @@
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">Create</button>
-                            <a href="{{ route('users.index') }}" class="btn btn-secondary ms-2">Cancel</a>
+                            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary ms-2">Cancel</a>
                         </div>
                     </form>
                 </div>

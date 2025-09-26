@@ -11,7 +11,7 @@
 
 <div class="card">
     <div class="card-body">
-        <form action="{{ route('general-settings.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('admin.general-settings.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="row">
                 <div class="col-lg-3 col-sm-6 col-12">

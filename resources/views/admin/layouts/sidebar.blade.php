@@ -6,8 +6,8 @@
     <div class="sidebar-inner slimscroll">
         <div id="sidebar-menu" class="sidebar-menu">
             <ul>
-                <li class="{{ request()->is('/') ? 'active' : '' }}">
-                    <a href="{{ url(env('APP_URL','http://127.0.0.1:8000')) }}">
+                <li class="{{ request()->is('admin/') ? 'active' : '' }}">
+                    <a href="{{ url(env('APP_URL','http://127.0.0.1:8000')) }}/admin">
                         <img src="{{ static_asset('assets/img/icons/dashboard.svg') }}" alt="img">
                         <span> Dashboard</span>
                     </a>
@@ -23,7 +23,7 @@
 
                     @if ($menu->children->count())
                         <li class="submenu {{ $isActive ? 'active' : '' }}">
-                            <a href="{{ $menu->route ? url(env('APP_URL','http://127.0.0.1:8000')).'/'.$menu->route : '#' }}">
+                            <a href="{{ $menu->route ? url(env('APP_URL','http://127.0.0.1:8000')).'/admin/'.$menu->route : '#' }}">
                                 <i class="{{ $menu->icon }}"></i> <span> {{ $menu->title }} </span>
                                 <span class="menu-arrow"></span>
                             </a>
@@ -31,7 +31,7 @@
                                 @foreach ($menu->children as $child)
                                     @if(auth()->user()->can($child->permission_name))
                                     <li class="{{ request()->is(trim($child->route, '/')) ? 'active' : '' }}">
-                                        <a href="{{ $child->route ? url(env('APP_URL','http://127.0.0.1:8000')).'/'.$child->route : '#' }}">
+                                        <a href="{{ $child->route ? url(env('APP_URL','http://127.0.0.1:8000')).'/admin/'.$child->route : '#' }}">
                                             {{ $child->title }}
                                         </a>
                                     </li>
@@ -41,7 +41,7 @@
                         </li>
                     @else
                         <li class="{{ $isActive ? 'active' : '' }}">
-                            <a href="{{ $menu->route ? url(env('APP_URL','http://127.0.0.1:8000')).'/'.$menu->route : '#' }}">
+                            <a href="{{ $menu->route ? url(env('APP_URL','http://127.0.0.1:8000')).'/admin/'.$menu->route : '#' }}">
                                 <i class="{{ $menu->icon }}"></i> <span> {{ $menu->title }} </span>
                             </a>
                         </li>

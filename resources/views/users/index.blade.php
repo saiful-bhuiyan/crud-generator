@@ -8,7 +8,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h2 class="mb-0">Users</h2>
                     @can('user-create')
-                    <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">Create User</a>
+                    <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">Create User</a>
                     @endcan
                 </div>
                 <div class="card-body">
@@ -36,10 +36,10 @@
                                         </td>
                                         <td>
                                             @can('user-update')
-                                            <a href="{{ route('users.edit', $user->id) }}" class="btn btn-sm btn-warning me-1">Edit</a>
+                                            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-warning me-1">Edit</a>
                                             @endcan
                                             @can('user-delete')
-                                            <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button onclick="return confirm('Are you sure?')" class="btn btn-sm btn-danger">Delete</button>

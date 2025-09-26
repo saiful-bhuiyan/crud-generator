@@ -11,7 +11,7 @@
                 </div>
 
                 <div class="card-body">
-                    <form action="{{ route('menus.store') }}" method="POST">
+                    <form action="{{ route('admin.menus.store') }}" method="POST">
                         @include('menus.form')
                     </form>
                 </div>

@@ -11,7 +11,7 @@
                 </div>
 
                 <div class="card-body">
-                    <form action="{{ route('menus.update', $menu) }}" method="POST">
+                    <form action="{{ route('admin.menus.update', $menu) }}" method="POST">
                         @method('PUT')
                         @csrf
                         @include('menus.form')

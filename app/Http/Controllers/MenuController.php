@@ -40,7 +40,7 @@ class MenuController extends Controller
 
         Menu::create($request->all());
 
-        return redirect()->route('menus.index')->with('success', 'Menu created successfully.');
+        return redirect()->route('admin.menus.index')->with('success', 'Menu created successfully.');
     }
 
     public function edit(Menu $menu)
@@ -62,12 +62,12 @@ class MenuController extends Controller
 
         $menu->update($request->all());
 
-        return redirect()->route('menus.index')->with('success', 'Menu updated successfully.');
+        return redirect()->route('admin.menus.index')->with('success', 'Menu updated successfully.');
     }
 
     public function destroy(Menu $menu)
     {
         $menu->delete();
-        return redirect()->route('menus.index')->with('success', 'Menu deleted.');
+        return redirect()->route('admin.menus.index')->with('success', 'Menu deleted.');
     }
 }

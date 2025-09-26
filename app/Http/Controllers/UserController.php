@@ -48,7 +48,7 @@ class UserController extends Controller
 
         $user->assignRole($request->role);
 
-        return redirect()->route('users.index')->with('success', 'User created!');
+        return redirect()->route('admin.users.index')->with('success', 'User created!');
     }
 
     /**
@@ -76,7 +76,7 @@ class UserController extends Controller
 
         $user->syncRoles([$request->role]);
 
-        return redirect()->route('users.index')->with('success', 'User updated!');
+        return redirect()->route('admin.users.index')->with('success', 'User updated!');
     }
 
     /**
@@ -85,6 +85,6 @@ class UserController extends Controller
     public function destroy($id)
     {
         User::findOrFail($id)->delete();
-        return redirect()->route('users.index')->with('success', 'User deleted!');
+        return redirect()->route('admin.users.index')->with('success', 'User deleted!');
     }
 }

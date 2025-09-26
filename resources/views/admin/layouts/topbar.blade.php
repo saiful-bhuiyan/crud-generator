@@ -1,12 +1,12 @@
 <div class="header">
 
             <div class="header-left active">
-                <a href="{{ url('/') }}" class="logo">
+                <a href="{{ url('admin/') }}" class="logo">
                     <img src="{{ isset($general_settings['site_logo']) && $general_settings['site_logo'] 
                                 ? asset($general_settings['site_logo']) 
                                 : static_asset('assets/img/logo.png') }}" alt="img">
                 </a>
-                <a href="{{ url('/') }}" class="logo-small">
+                <a href="{{ url('admin/') }}" class="logo-small">
                     <img src="{{ isset($general_settings['site_mini_logo']) && $general_settings['site_mini_logo'] 
                                 ? asset($general_settings['site_mini_logo']) 
                                 : static_asset('assets/img/logo.png') }}" alt="">
@@ -175,12 +175,12 @@
                                 </div>
                             </div>
                             <hr class="m-0">
-                            <a class="dropdown-item" href="{{ route('profile.index') }}"> <i class="me-2" data-feather="user"></i> My Profile</a>
+                            <a class="dropdown-item" href="{{ route('admin.profile.index') }}"> <i class="me-2" data-feather="user"></i> My Profile</a>
                             @can('general-setting-index')
-                            <a class="dropdown-item" href="{{ route('general-settings.index') }}"><i class="me-2" data-feather="settings"></i>Settings</a>
+                            <a class="dropdown-item" href="{{ route('admin.general-settings.index') }}"><i class="me-2" data-feather="settings"></i>Settings</a>
                             @endcan
                             <hr class="m-0">
-                            <a class="dropdown-item logout pb-0" href="{{ url('logout') }}"><img src="{{ static_asset('assets/img/icons/log-out.svg') }}" class="me-2" alt="img">Logout</a>
+                            <a class="dropdown-item logout pb-0" href="{{ url('admin/logout') }}"><img src="{{ static_asset('assets/img/icons/log-out.svg') }}" class="me-2" alt="img">Logout</a>
                         </div>
                     </div>
                 </li>
@@ -190,9 +190,9 @@
             <div class="dropdown mobile-user-menu">
                 <a href="javascript:void(0);" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></a>
                 <div class="dropdown-menu dropdown-menu-right">
-                    <a class="dropdown-item" href="{{ route('profile.index') }}">My Profile</a>
-                    <a class="dropdown-item" href="{{ route('general-settings.index') }}">Settings</a>
-                    <a class="dropdown-item" href="{{ url('logout') }}">Logout</a>
+                    <a class="dropdown-item" href="{{ route('admin.profile.index') }}">My Profile</a>
+                    <a class="dropdown-item" href="{{ route('admin.general-settings.index') }}">Settings</a>
+                    <a class="dropdown-item" href="{{ url('admin/logout') }}">Logout</a>
                 </div>
             </div>
 

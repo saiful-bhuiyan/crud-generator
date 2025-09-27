@@ -349,7 +349,7 @@ PHP;
                 $storeFieldsStr
             ]);
 
-            return redirect()->route('$tableName.index')->with('success', '$modelName created successfully.');
+            return redirect()->route('admin.$tableName.index')->with('success', '$modelName created successfully.');
         }
 
         public function show($modelName \${$modelVariable})
@@ -376,13 +376,13 @@ PHP;
 
             \${$modelVariable}->update(\$data);
 
-            return redirect()->route('$tableName.index')->with('success', '$modelName updated successfully.');
+            return redirect()->route('admin.$tableName.index')->with('success', '$modelName updated successfully.');
         }
 
         public function destroy($modelName \${$modelVariable})
         {
             \${$modelVariable}->delete();
-            return redirect()->route('$tableName.index')->with('success', '$modelName deleted successfully.');
+            return redirect()->route('admin.$tableName.index')->with('success', '$modelName deleted successfully.');
         }
     }
     PHP;
@@ -467,12 +467,12 @@ PHP;
         $filterFormHtml = '';
         if (!empty($filterForm)) {
             $filterFormHtml = <<<BLADE
-            <form method="GET" action="{{ route('$tableName.index') }}">
+            <form method="GET" action="{{ route('admin.$tableName.index') }}">
                 <div class="row">
                     $filterForm
                     <div class="col-md-3 mb-2 align-self-end">
                         <button type="submit" class="btn btn-primary">Filter</button>
-                        <a href="{{ route('$tableName.index') }}" class="btn btn-secondary">Reset</a>
+                        <a href="{{ route('admin.$tableName.index') }}" class="btn btn-secondary">Reset</a>
                     </div>
                 </div>
             </form>
@@ -492,7 +492,7 @@ PHP;
                     <div class="card-header d-flex justify-content-between">
                         <h4>$modelName List</h4>
                         @can('$permissionBase-create')
-                        <a href="{{ route('$tableName.create') }}" class="btn btn-primary btn-sm">Add New</a>
+                        <a href="{{ route('admin.$tableName.create') }}" class="btn btn-primary btn-sm">Add New</a>
                         @endcan
                     </div>
                     <div class="card-body">
@@ -514,13 +514,13 @@ PHP;
                                             $tableBody
                                             <td>
                                                 @can('$permissionBase-index')
-                                                <a href="{{ route('$tableName.show', \${$modelVariable}Item) }}" class="btn btn-primary btn-sm">Show</a>
+                                                <a href="{{ route('admin.$tableName.show', \${$modelVariable}Item) }}" class="btn btn-primary btn-sm">Show</a>
                                                 @endcan
                                                 @can('$permissionBase-update')
-                                                <a href="{{ route('$tableName.edit', \${$modelVariable}Item) }}" class="btn btn-warning btn-sm">Edit</a>
+                                                <a href="{{ route('admin.$tableName.edit', \${$modelVariable}Item) }}" class="btn btn-warning btn-sm">Edit</a>
                                                 @endcan
                                                 @can('$permissionBase-delete')
-                                                <form action="{{ route('$tableName.destroy', \${$modelVariable}Item) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Are you sure?');">
+                                                <form action="{{ route('admin.$tableName.destroy', \${$modelVariable}Item) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Are you sure?');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button class="btn btn-danger btn-sm">Delete</button>
@@ -655,11 +655,11 @@ PHP;
                         <h4>Create $modelName</h4>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('$tableName.store') }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('admin.$tableName.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             $createInputs
                             <button type="submit" class="btn btn-primary">Save</button>
-                            <a href="{{ route('$tableName.index') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ route('admin.$tableName.index') }}" class="btn btn-secondary">Cancel</a>
                         </form>
                     </div>
                 </div>
@@ -683,12 +683,12 @@ PHP;
                         <h4>Edit $modelName</h4>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('$tableName.update', \${$modelVariable}) }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('admin.$tableName.update', \${$modelVariable}) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
                             $editInputs
                             <button type="submit" class="btn btn-primary">Update</button>
-                            <a href="{{ route('$tableName.index') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ route('admin.$tableName.index') }}" class="btn btn-secondary">Cancel</a>
                         </form>
                     </div>
                 </div>
@@ -743,7 +743,7 @@ PHP;
                             <table class="table table-bordered">
                                 $showFields
                             </table>
-                            <a href="{{ route('$tableName.index') }}" class="btn btn-secondary">Back</a>
+                            <a href="{{ route('admin.$tableName.index') }}" class="btn btn-secondary">Back</a>
                         </div>
                     </div>
                 </div>

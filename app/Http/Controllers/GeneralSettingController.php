@@ -55,12 +55,24 @@ class GeneralSettingController extends Controller
             if (in_array($lastSegment, ['photo', 'image', 'logo'])) {
                 if($request->hasFile($type)) {
                     $existingSetting = GeneralSetting::where('type', $type)->first();
+                    // delete old file if exists
                     if ($existingSetting && !empty($existingSetting->value)) {
                         delete_uploaded_asset($existingSetting->value);
                     }
+
+                    // upload new file
                     $value = upload_asset($request->file($type));
-                    $existingSetting->value = is_array($value) ? json_encode($value) : $value;
-                    $existingSetting->save();
+
+                    // update or create
+                    if ($existingSetting) {
+                        $existingSetting->value = is_array($value) ? json_encode($value) : (string) $value;
+                        $existingSetting->save();
+                    } else {
+                        GeneralSetting::create([
+                            'type'  => $type,
+                            'value' => is_array($value) ? json_encode($value) : (string) $value,
+                        ]);
+                    }
                 }
             } else {
                 // Save to DB

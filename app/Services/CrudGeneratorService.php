@@ -34,7 +34,7 @@ class CrudGeneratorService
         $this->createFile(app_path("Http/Controllers/{$controllerName}.php"), $controllerContent);
 
         // Generate views
-        $viewFolder = resource_path("views/{$tableName}");
+        $viewFolder = resource_path("views/admin/{$tableName}");
         if (!file_exists($viewFolder)) {
             mkdir($viewFolder, 0755, true);
         }
@@ -321,12 +321,12 @@ PHP;
 
         public function index(Request \$request)
         {
-            \$query = $modelName::query();
+            \$query = $modelName::orderBy('created_at', 'desc');
     $filterConditionsStr
 
             \${$modelVariable}Lists = \$query->paginate(10);
             {$relatedCreateViewVars}
-            return view('$tableName.index', [
+            return view('admin.$tableName.index', [
                 '{$modelVariable}Lists' => \${$modelVariable}Lists$filterViewParams
             ]);
         }
@@ -334,7 +334,7 @@ PHP;
         public function create()
         {
             $relatedCreateViewVars
-            return view('$tableName.create', [
+            return view('admin.$tableName.create', [
                 $relatedCreateAssocArray
             ]);
         }
@@ -354,13 +354,13 @@ PHP;
 
         public function show($modelName \${$modelVariable})
         {
-            return view('$tableName.show', ['{$modelVariable}' => \${$modelVariable}]);
+            return view('admin.$tableName.show', ['{$modelVariable}' => \${$modelVariable}]);
         }
 
         public function edit($modelName \${$modelVariable})
         {
             $relatedEditViewVars
-            return view('$tableName.edit', [
+            return view('admin.$tableName.edit', [
                 $relatedEditAssocArray
             ]);
         }
@@ -430,7 +430,7 @@ PHP;
                 </div>
                 BLADE;
 
-                $tableBodyItem = "<td><img src=\"{{ \${$modelVariable}Item->{$col['name']} }}\" alt=\"$label\" style=\"max-width:80px; max-height:80px;\"></td>\n                            ";
+                $tableBodyItem = "<td><img src=\"{{ get_uploaded_asset(\${$modelVariable}Item->{$col['name']}) }}\" alt=\"$label\" style=\"max-width:80px; max-height:80px;\"></td>\n                            ";
             } elseif(in_array($col['type'],['date','datetime'])) {
                 $label = ucfirst(str_replace('_', ' ', $col['name']));
                 $filterFormItem = <<<BLADE
@@ -534,7 +534,7 @@ PHP;
                                 </tbody>
                             </table>
                         </div>
-                        {{ \${$modelVariable}Lists->links() }}
+                        {{ \${$modelVariable}Lists->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
@@ -715,7 +715,7 @@ PHP;
                             $showFields .= <<<HTML
                 <tr>
                     <th>$label</th>
-                    <td><img src="{{ \${$modelVariable}->{$col['name']} }}" alt="$label" style="max-width:100px;"></td>
+                    <td><img src="{{ get_uploaded_asset(\${$modelVariable}->{$col['name']}) }}" alt="$label" style="max-width:100px;"></td>
                 </tr>
                 HTML;
                         } else {

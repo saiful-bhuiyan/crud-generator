@@ -26,9 +26,12 @@ if (!function_exists('upload_asset')) {
         }
 
         $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
+
+        // Store file
         $path = $file->storeAs($directory, $filename, $disk);
 
-        return Storage::disk($disk)->url($path);
+        // ✅ Return relative path (e.g. "uploads/abc123.jpg")
+        return $path;
     }
 }
 

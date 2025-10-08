@@ -40,7 +40,7 @@ class CrudGeneratorController extends Controller
             'table_name' => ['required', 'string', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/'],
             'columns' => ['required', 'array', 'min:1'],
             'columns.*.name' => ['required', 'string', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/'],
-            'columns.*.type' => ['required', 'string', 'in:string,integer,bigInteger,unsignedBigInteger,double,text,boolean,date,datetime,image'],
+            'columns.*.type' => ['required', 'string', 'in:string,integer,bigInteger,unsignedBigInteger,double,text,longText,boolean,date,datetime,image'],
             'columns.*.required' => ['sometimes', 'boolean'],
             'columns.*.show_in_table' => ['sometimes', 'boolean'],
             'columns.*.is_filter' => ['sometimes', 'boolean'],

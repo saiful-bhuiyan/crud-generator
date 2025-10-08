@@ -24,7 +24,8 @@
     <link rel="stylesheet" href="{{ static_asset('assets/css/style.css') }}">
 
     <link rel="stylesheet" href="{{ static_asset('assets/plugins/select2/css/select2.min.css') }}">
-    <link rel="stylesheet" href="{{ static_asset('assets/plugins/daterangepicker/daterangepicker.css') }}"></script>
+    <link rel="stylesheet" href="{{ static_asset('assets/plugins/daterangepicker/daterangepicker.css') }}"></link>
+    <link rel="stylesheet" href="{{ static_asset('assets/plugins/summernote/summernote-bs4.min.css') }}"></link>
 
 
     @yield('style')
@@ -66,6 +67,7 @@
 
         <script src="{{ static_asset('assets/plugins/daterangepicker/moment.min.js') }}"></script>
         <script src="{{ static_asset('assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
+        <script src="{{ static_asset('assets/plugins/summernote/summernote-bs4.min.js') }}"></script>
 
         <script>
             $(function() {
@@ -75,6 +77,23 @@
                 console.log("A new date selection was made: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
             });
             });
+
+            $(document).ready(function () {
+                    // Initialize Summernote on all elements with class 'html-editor'
+                    $('.html-editor').summernote({
+                        height: 250,
+                        toolbar: [
+                            ['style', ['style']],
+                            ['font', ['bold', 'italic', 'underline', 'clear']],
+                            ['fontname', ['fontname']],
+                            ['fontsize', ['fontsize']],
+                            ['color', ['color']],
+                            ['para', ['ul', 'ol', 'paragraph']],
+                            ['insert', ['link', 'picture', 'video']],
+                            ['view', ['codeview', 'help']]
+                        ]
+                    });
+                });
         </script>
 
         @yield('script')

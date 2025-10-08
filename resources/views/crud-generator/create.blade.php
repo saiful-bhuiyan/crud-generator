@@ -36,6 +36,7 @@
                                             <option value="unsignedBigInteger">unsignedBigInteger</option>
                                             <option value="double">double</option>
                                             <option value="text">text</option>
+                                            <option value="longText">Long Text (Html Editor)</option>
                                             <option value="boolean">boolean</option>
                                             <option value="date">date</option>
                                             <option value="datetime">datetime</option>
@@ -106,6 +107,7 @@
                         <option value="unsignedBigInteger">unsignedBigInteger</option>
                         <option value="double">double</option>
                         <option value="text">text</option>
+                        <option value="longText">Long Text</option>
                         <option value="boolean">boolean</option>
                         <option value="date">date</option>
                         <option value="datetime">datetime</option>

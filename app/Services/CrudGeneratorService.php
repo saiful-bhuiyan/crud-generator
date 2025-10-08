@@ -86,6 +86,9 @@ class CrudGeneratorService
                 case 'text':
                     $fields .= "\$table->text('$name')$nullable;\n            ";
                     break;
+                case 'longText':
+                    $fields .= "\$table->longText('$name')$nullable;\n            ";
+                    break;
                 case 'integer':
                 case 'int':
                     $fields .= "\$table->integer('$name')$nullable;\n            ";
@@ -216,7 +219,7 @@ PHP;
             $rule = $col['required'] ? 'required' : 'nullable';
             $typeRule = match($col['type']) {
                 'string', 'varchar' => 'string',
-                'text' => 'string',
+                'text', 'longText' => 'string',
                 'integer', 'int', 'unsignedBigInteger' => 'integer',
                 'double', 'float' => 'numeric',
                 'boolean' => 'boolean',
@@ -573,12 +576,16 @@ PHP;
                     @enderror
                     HTML;
                 } else {
+                    $htmlClass = '';
                     // Input field type logic
                     $inputType = 'text';
                     if (in_array($type, ['image', 'file'])) {
                         $inputType = 'file';
-                    } elseif ($type === 'text') {
+                    } elseif (in_array($type,['text','longText'])) {
                         $inputType = 'textarea';
+                        if($type == 'longText') {
+                            $htmlClass .= ' html-editor';
+                        }
                     } elseif (in_array($type, ['integer', 'unsignedBigInteger'])) {
                         $inputType = 'number';
                     } elseif (in_array($type, ['double', 'float'])) {
@@ -595,7 +602,7 @@ PHP;
                         $value = $isEdit ? "{{ old('$colName', \${$modelVariable}->$colName) }}" : "{{ old('$colName') }}";
                         $fieldBlade = <<<HTML
                         <label for="$colName" class="form-label">$label</label>
-                        <textarea class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" rows="4">$value</textarea>
+                        <textarea class="form-control @error('$colName') is-invalid @enderror $htmlClass" id="$colName" name="$colName" rows="4">$value</textarea>
                         @error('$colName')
                             <div class="invalid-feedback">{{ \$message }}</div>
                         @enderror

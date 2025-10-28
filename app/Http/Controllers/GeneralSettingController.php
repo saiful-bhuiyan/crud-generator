@@ -53,26 +53,29 @@ class GeneralSettingController extends Controller
             // Upload image/photo/logo
             $lastSegment = strtolower(Str::afterLast($type, '_'));
             if (in_array($lastSegment, ['photo', 'image', 'logo'])) {
-                if($request->hasFile($type)) {
+                if ($request->hasFile($type)) {
+                    // Try to find existing setting
                     $existingSetting = GeneralSetting::where('type', $type)->first();
-                    // delete old file if exists
-                    if ($existingSetting && !empty($existingSetting->value)) {
+
+                    // If it doesn't exist, create a new one
+                    if (!$existingSetting) {
+                        $existingSetting = new GeneralSetting();
+                        $existingSetting->type = $type;
+                    }
+
+                    // Delete old file if exists
+                    if (!empty($existingSetting->value)) {
                         delete_uploaded_asset($existingSetting->value);
                     }
 
-                    // upload new file
+                    // Upload new file
                     $value = upload_asset($request->file($type));
 
-                    // update or create
-                    if ($existingSetting) {
-                        $existingSetting->value = is_array($value) ? json_encode($value) : (string) $value;
-                        $existingSetting->save();
-                    } else {
-                        GeneralSetting::create([
-                            'type'  => $type,
-                            'value' => is_array($value) ? json_encode($value) : (string) $value,
-                        ]);
-                    }
+                    // Assign value
+                    $existingSetting->value = is_array($value) ? json_encode($value) : $value;
+
+                    // Save to database
+                    $existingSetting->save();
                 }
             } else {
                 // Save to DB

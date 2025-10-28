@@ -3,12 +3,12 @@
             <div class="header-left active">
                 <a href="{{ url('admin/') }}" class="logo">
                     <img src="{{ isset($general_settings['site_logo']) && $general_settings['site_logo'] 
-                                ? asset($general_settings['site_logo']) 
+                                ? get_uploaded_asset($general_settings['site_logo']) 
                                 : static_asset('assets/img/logo.png') }}" alt="img">
                 </a>
                 <a href="{{ url('admin/') }}" class="logo-small">
                     <img src="{{ isset($general_settings['site_mini_logo']) && $general_settings['site_mini_logo'] 
-                                ? asset($general_settings['site_mini_logo']) 
+                                ? get_uploaded_asset($general_settings['site_mini_logo']) 
                                 : static_asset('assets/img/logo.png') }}" alt="">
                 </a>
                 <a id="toggle_btn" href="javascript:void(0);">

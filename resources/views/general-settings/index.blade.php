@@ -29,7 +29,7 @@
                             <input type="hidden" name="types[]" value="site_logo">
                             <input type="file" name="site_logo">
                             <div class="image-uploads">
-                                <img src="{{ getGeneralSetting('site_logo') ? getGeneralSetting('site_logo') : static_asset('assets/img/icons/upload.svg') }}" height="70px" width="70px" alt="img">
+                                <img src="{{ getGeneralSetting('site_logo') ? get_uploaded_asset(getGeneralSetting('site_logo')) : static_asset('assets/img/icons/upload.svg') }}" height="70px" width="70px" alt="img">
                                 <h4>Drag and drop a file to upload</h4>
                             </div>
                         </div>
@@ -43,7 +43,7 @@
                             <input type="hidden" name="types[]" value="site_mini_logo">
                             <input type="file" name="site_mini_logo">
                             <div class="image-uploads">
-                                <img src="{{ getGeneralSetting('site_mini_logo') ? getGeneralSetting('site_mini_logo') : static_asset('assets/img/icons/upload.svg') }}" height="70px" width="70px" alt="img">
+                                <img src="{{ getGeneralSetting('site_mini_logo') ? get_uploaded_asset(getGeneralSetting('site_mini_logo')) : static_asset('assets/img/icons/upload.svg') }}" height="70px" width="70px" alt="img">
                                 <h4>Drag and drop a file to upload</h4>
                             </div>
                         </div>
@@ -57,6 +57,27 @@
                         <input type="text" name="currency" value="{{ getGeneralSetting('currency') }}" placeholder="Enter Currency">
                     </div>
                 </div>
+                
+                <div class="col-lg-3 col-sm-6 col-12">
+                    <div class="form-group">
+                        <label>Currency Symbol<span class="manitory">*</span></label>
+                        <input type="hidden" name="types[]" value="currency_symbol">
+                        <input type="text" name="currency_symbol" value="{{ getGeneralSetting('currency_symbol') }}" placeholder="Enter Symbol">
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-sm-6 col-12">
+                    <div class="form-group">
+                        <label>Currency Position<span class="manitory">*</span></label>
+                        <input type="hidden" name="types[]" value="currency_position">
+                        <select name="currency_position" class="form-control">
+                            <option value="">Select</option>
+                            <option value="left" {{ getGeneralSetting('currency_position') == 'left' ? 'selected' : '' }}>Left</option>
+                            <option value="right" {{ getGeneralSetting('currency_position') == 'right' ? 'selected' : '' }}>Right</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="col-lg-3 col-sm-6 col-12">
                     <div class="form-group">
                         <label>Currency Decimal<span class="manitory">*</span></label>
@@ -68,10 +89,14 @@
                     <div class="form-group">
                         <label>Date Format<span class="manitory">*</span></label>
                         <input type="hidden" name="types[]" value="date_format">
-                        <select class="select" name="date_format">
+                        <select class="select" name="date_format" class="form-control">
                             <option value="">Choose Date Format </option>
-                            <option value="DD/MM/YYYY" {{ getGeneralSetting('date_format') == 'DD/MM/YYYY' ? 'selected' : '' }}>DD/MM/YYYY</option>
-                            <option value="MM/DD/YYYY" {{ getGeneralSetting('date_format') == 'MM/DD/YYYY' ? 'selected' : '' }}>MM/DD/YYYY</option>
+                            <option value="d-m-Y" {{ getGeneralSetting('date_format') == 'd-m-Y' ? 'selected' : '' }}>d-m-Y (eg : 31-12-2023)</option>
+                            <option value="Y-m-d" {{ getGeneralSetting('date_format') == 'Y-m-d' ? 'selected' : '' }}>Y-m-d (eg : 2023-12-31)</option>
+                            <option value="d/m/Y" {{ getGeneralSetting('date_format') == 'd/m/Y' ? 'selected' : '' }}>d/m/Y (eg : 31/12/2023)</option>
+                            <option value="Y/m/d" {{ getGeneralSetting('date_format') == 'Y/m/d' ? 'selected' : '' }}>Y/m/d (eg : 2023/12/31)</option>
+                            <option value="d M Y" {{ getGeneralSetting('date_format') == 'd M Y' ? 'selected' : '' }}>d M Y (eg : 31 Dec 2023)</option>
+                            <option value="Y M d" {{ getGeneralSetting('date_format') == 'Y M d' ? 'selected' : '' }}>Y M d (eg : 2023 Dec 31)</option>
                         </select>
                     </div>
                 </div>

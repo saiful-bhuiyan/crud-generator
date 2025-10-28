@@ -205,6 +205,7 @@ PHP;
     {
         $permissionBase = Str::snake($modelName);
         $modelVariable = Str::camel($modelName);
+        $headline = Str::headline($modelName);
 
         $validationRules = [];
         $storeFields = [];
@@ -247,7 +248,7 @@ PHP;
 
             if (!empty($col['foreign_table']) && !empty($col['foreign_column'])) {
                 $relatedModelName = Str::studly(Str::singular($col['foreign_table']));
-                $relatedVarName = Str::camel(Str::plural($relatedModelName));
+                $relatedVarName = Str::camel(Str::plural(Str::snake($relatedModelName)));
 
                 $relatedModels[$relatedModelName] = "use App\Models\\$relatedModelName;";
                 $relatedViewData[$relatedVarName] = "\$$relatedVarName = $relatedModelName::all();";
@@ -352,7 +353,7 @@ PHP;
                 $storeFieldsStr
             ]);
 
-            return redirect()->route('admin.$tableName.index')->with('success', '$modelName created successfully.');
+            return redirect()->route('admin.$tableName.index')->with('success', '$headline created successfully.');
         }
 
         public function show($modelName \${$modelVariable})
@@ -379,13 +380,13 @@ PHP;
 
             \${$modelVariable}->update(\$data);
 
-            return redirect()->route('admin.$tableName.index')->with('success', '$modelName updated successfully.');
+            return redirect()->route('admin.$tableName.index')->with('success', '$headline updated successfully.');
         }
 
         public function destroy($modelName \${$modelVariable})
         {
             \${$modelVariable}->delete();
-            return redirect()->route('admin.$tableName.index')->with('success', '$modelName deleted successfully.');
+            return redirect()->route('admin.$tableName.index')->with('success', '$headline deleted successfully.');
         }
     }
     PHP;
@@ -397,13 +398,16 @@ PHP;
         $tableBody = '';
         $permissionBase = Str::snake($modelName);
         $countCols = count($columns);
+        $headline = Str::headline($modelName);
         $filterForm = "";
 
         foreach ($columns as $col) {
             $name = $col['name'];
+            $required = !empty($col['required']) ? 'required' : '';
+            $requiredStar = !empty($col['required']) ? '<span class="text-danger">*</span>' : '';
+
             if (isset($col['foreign_table']) && isset($col['foreign_column']) && isset($col['foreign_column_title'])) {
-                $label = ucfirst(str_replace('_id', '', $col['name']));
-                $label = ucfirst(str_replace('_', ' ', $col['name']));
+                $label = Str::headline(preg_replace('/_id$/', '', $col['name']));
 
                 $relationMethod = Str::camel(str_replace('_id', '', $col['name']));
                 $relatedModel = Str::studly(Str::singular($col['foreign_table']));
@@ -412,8 +416,8 @@ PHP;
 
                 $filterFormItem = <<<BLADE
                 <div class="col-md-3 mb-2">
-                    <label for="$name">$label</label>
-                    <select name="$name" id="$name" class="form-control">
+                    <label for="$name">$label $requiredStar</label>
+                    <select name="$name" id="$name" class="form-control" $required>
                         <option value="">-- Select $label --</option>
                         @foreach(\\App\\Models\\$relatedModel::get() as \$item)
                             <option value="{{ \$item->id }}" {{ request('$name') == \$item->id ? 'selected' : '' }}>
@@ -428,29 +432,39 @@ PHP;
                 $label = ucfirst(str_replace('_', ' ', $col['name']));
                 $filterFormItem = <<<BLADE
                 <div class="col-md-3 mb-2">
-                    <label for="$name">$label</label>
-                    <input type="text" name="$name" id="$name" class="form-control" value="{{ request('$name') }}">
+                    <label for="$name">$label $requiredStar</label>
+                    <input type="text" name="$name" id="$name" class="form-control" value="{{ request('$name') }}" $required>
                 </div>
                 BLADE;
 
                 $tableBodyItem = "<td><img src=\"{{ get_uploaded_asset(\${$modelVariable}Item->{$col['name']}) }}\" alt=\"$label\" style=\"max-width:80px; max-height:80px;\"></td>\n                            ";
-            } elseif(in_array($col['type'],['date','datetime'])) {
+            } elseif($col['type'] == 'date') {
                 $label = ucfirst(str_replace('_', ' ', $col['name']));
                 $filterFormItem = <<<BLADE
                 <div class="col-md-3 mb-2">
-                    <label for="$name">$label</label>
-                    <input type="text" name="$name" id="$name" class="form-control datepick" value="{{ request('$name') }}">
+                    <label for="$name">$label $requiredStar</label>
+                    <input type="text" name="$name" id="$name" class="form-control datepick" value="{{ request('$name') }}" $required>
                 </div>
                 BLADE;
 
                 $tableBodyItem = "<td>{{ formatDate(\${$modelVariable}Item->{$col['name']}) }}</td>\n                            ";
+            } elseif($col['type'] == 'datetime') {
+                $label = ucfirst(str_replace('_', ' ', $col['name']));
+                $filterFormItem = <<<BLADE
+                <div class="col-md-3 mb-2">
+                    <label for="$name">$label $requiredStar</label>
+                    <input type="text" name="$name" id="$name" class="form-control datepick" value="{{ request('$name') }}" $required>
+                </div>
+                BLADE;
+
+                $tableBodyItem = "<td>{{ formatDateTime(\${$modelVariable}Item->{$col['name']}) }}</td>\n                            ";
             } else {
                 $label = ucfirst(str_replace('_', ' ', $col['name']));
 
                 $filterFormItem = <<<BLADE
                 <div class="col-md-3 mb-2">
-                    <label for="$name">$label</label>
-                    <input type="text" name="$name" id="$name" class="form-control" value="{{ request('$name') }}">
+                    <label for="$name">$label $requiredStar</label>
+                    <input type="text" name="$name" id="$name" class="form-control" value="{{ request('$name') }}" $required>
                 </div>
                 BLADE;
 
@@ -466,6 +480,9 @@ PHP;
                 $tableBody .=  $tableBodyItem;
             }
         }
+
+        $tableHeaders .= "<th>Created At</th>\n                            ";
+        $tableBody .= "<td>{{ formatDateTime(\${$modelVariable}Item->created_at) }}</td>\n                            ";
 
         $filterFormHtml = '';
         if (!empty($filterForm)) {
@@ -493,7 +510,7 @@ PHP;
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between">
-                        <h4>$modelName List</h4>
+                        <h4>$headline List</h4>
                         @can('$permissionBase-create')
                         <a href="{{ route('admin.$tableName.create') }}" class="btn btn-primary btn-sm">Add New</a>
                         @endcan
@@ -532,7 +549,7 @@ PHP;
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="{{ $countCols + 2 }}" class="text-center">No $modelName found.</td></tr>
+                                        <tr><td colspan="{{ $countCols + 2 }}" class="text-center">No $headline found.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
@@ -554,15 +571,18 @@ PHP;
                 $label = ucfirst(str_replace('_', ' ', $colName));
                 $type = $col['type'];
 
+                $required = !empty($col['required']) ? 'required' : '';
+                $requiredStar = !empty($col['required']) ? '<span class="text-danger">*</span>' : '';
+
                 // If relation, generate <select>
                 if (isset($col['foreign_table'], $col['foreign_column'], $col['foreign_column_title'])) {
-                    $relationVar = Str::camel(Str::plural($col['foreign_table']));
+                    $relationVar = Str::camel(Str::plural(Str::snake($col['foreign_table'])));
                     $relationLabel = $col['foreign_column_title'];
-                    $selectLabel = ucfirst(str_replace('_', ' ', str_replace('_id', '', $col['name'])));
+                    $selectLabel = Str::headline(preg_replace('/_id$/', '', $col['name']));
 
                     $fieldBlade = <<<HTML
-                    <label for="$colName" class="form-label">$selectLabel</label>
-                    <select class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName">
+                    <label for="$colName" class="form-label">$selectLabel $requiredStar</label>
+                    <select class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" $required>
                         <option value="">Select $selectLabel</option>
                         @foreach(\$$relationVar as \$item)
                             <option value="{{ \$item->id }}"
@@ -601,18 +621,21 @@ PHP;
                     if ($inputType === 'textarea') {
                         $value = $isEdit ? "{{ old('$colName', \${$modelVariable}->$colName) }}" : "{{ old('$colName') }}";
                         $fieldBlade = <<<HTML
-                        <label for="$colName" class="form-label">$label</label>
-                        <textarea class="form-control @error('$colName') is-invalid @enderror $htmlClass" id="$colName" name="$colName" rows="4">$value</textarea>
+                        <label for="$colName" class="form-label">$label $requiredStar</label>
+                        <textarea class="form-control @error('$colName') is-invalid @enderror $htmlClass" id="$colName" name="$colName" rows="4" $required>$value</textarea>
                         @error('$colName')
                             <div class="invalid-feedback">{{ \$message }}</div>
                         @enderror
                         HTML;
                     } elseif ($inputType === 'checkbox') {
-                        $checked = $isEdit ? "{{ old('$colName', \${$modelVariable}->$colName) ? 'checked' : '' }}" : "{{ old('$colName') ? 'checked' : '' }}";
+                        $checked = $isEdit 
+                            ? "{{ old('$colName', \${$modelVariable}->$colName) ? 'checked' : '' }}" 
+                            : "{{ old('$colName') ? 'checked' : '' }}";
                         $fieldBlade = <<<HTML
                         <div class="form-check">
+                            <input type="hidden" name="$colName" value="0">
                             <input type="checkbox" class="form-check-input @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="1" $checked>
-                            <label for="$colName" class="form-check-label">$label</label>
+                            <label for="$colName" class="form-check-label">$label $requiredStar</label>
                             @error('$colName')
                                 <div class="invalid-feedback">{{ \$message }}</div>
                             @enderror
@@ -620,8 +643,8 @@ PHP;
                         HTML;
                     } elseif ($inputType === 'file') {
                         $fieldBlade = <<<HTML
-                        <label for="$colName" class="form-label">$label</label>
-                        <input type="file" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName">
+                        <label for="$colName" class="form-label">$label $requiredStar</label>
+                        <input type="file" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" $required>
                         @error('$colName')
                             <div class="invalid-feedback">{{ \$message }}</div>
                         @enderror
@@ -629,8 +652,8 @@ PHP;
                     } else {
                         $value = $isEdit ? "{{ old('$colName', \${$modelVariable}->$colName) }}" : "{{ old('$colName') }}";
                         $fieldBlade = <<<HTML
-                        <label for="$colName" class="form-label">$label</label>
-                        <input type="$inputType" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="$value">
+                        <label for="$colName" class="form-label">$label $requiredStar</label>
+                        <input type="$inputType" class="form-control @error('$colName') is-invalid @enderror" id="$colName" name="$colName" value="$value" $required>
                         @error('$colName')
                             <div class="invalid-feedback">{{ \$message }}</div>
                         @enderror
@@ -659,7 +682,7 @@ PHP;
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h4>Create $modelName</h4>
+                        <h4>Create $headline</h4>
                     </div>
                     <div class="card-body">
                         <form action="{{ route('admin.$tableName.store') }}" method="POST" enctype="multipart/form-data">
@@ -687,7 +710,7 @@ PHP;
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h4>Edit $modelName</h4>
+                        <h4>Edit $headline</h4>
                     </div>
                     <div class="card-body">
                         <form action="{{ route('admin.$tableName.update', \${$modelVariable}) }}" method="POST" enctype="multipart/form-data">
@@ -718,22 +741,43 @@ PHP;
                     <td>{{ \${$modelVariable}->{$relationMethod}?->{$relationLabel} }}</td>
                 </tr>
                 HTML;
-                        } elseif (in_array($col['type'], ['image', 'file'])) {
-                            $showFields .= <<<HTML
+            } elseif (in_array($col['type'], ['image', 'file'])) {
+                $showFields .= <<<HTML
                 <tr>
                     <th>$label</th>
                     <td><img src="{{ get_uploaded_asset(\${$modelVariable}->{$col['name']}) }}" alt="$label" style="max-width:100px;"></td>
                 </tr>
                 HTML;
-                        } else {
-                            $showFields .= <<<HTML
+            } else if($col['type'] =='date') {
+                $showFields .= <<<HTML
+                <tr>
+                    <th>$label</th>
+                    <td>{{ formatDate(\${$modelVariable}->{$col['name']}) }}</td>
+                </tr>
+                HTML;
+            } else if($col['type'] =='datetime') {
+                $showFields .= <<<HTML
+                <tr>
+                    <th>$label</th>
+                    <td>{{ formatDateTime(\${$modelVariable}->{$col['name']}) }}</td>
+                </tr>
+                HTML;
+            } else {
+                $showFields .= <<<HTML
                 <tr>
                     <th>$label</th>
                     <td>{{ \${$modelVariable}->{$col['name']} }}</td>
                 </tr>
                 HTML;
-            }
+            } 
         }
+
+        $showFields .= <<<HTML
+                <tr>
+                    <th>Created At</th>
+                     <td>{{ formatDateTime(\${$modelVariable}->created_at) }}</td>
+                </tr>
+                HTML;
 
         $showView = <<<BLADE
         @extends('admin.layouts.master')
@@ -744,7 +788,7 @@ PHP;
                 <div class="col-lg-8">
                     <div class="card">
                         <div class="card-header">
-                            <h4>Show $modelName</h4>
+                            <h4>Show $headline</h4>
                         </div>
                         <div class="card-body">
                             <table class="table table-bordered">

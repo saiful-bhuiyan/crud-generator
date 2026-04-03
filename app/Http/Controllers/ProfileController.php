@@ -37,7 +37,7 @@ class ProfileController extends Controller
             'last_name' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => 'nullable|string|min:8',
         ]);
 
         if($request->file('avatar'))

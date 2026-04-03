@@ -18,7 +18,7 @@
             <div class="login-content">
                 <div class="login-userset">
                     <div class="login-logo">
-                        <img src="{{ static_asset('assets/img/logo.png') }}" alt="img">
+                        <img src="{{ getGeneralSetting('site_logo') ? get_uploaded_asset(getGeneralSetting('site_logo')) : static_asset('assets/img/icons/upload.svg') }}" alt="img">
                     </div>
                     <div class="login-userheading">
                         <h3>Reset Password</h3>

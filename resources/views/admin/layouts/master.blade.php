@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="{{ static_asset('assets/plugins/daterangepicker/daterangepicker.css') }}"></link>
     <link rel="stylesheet" href="{{ static_asset('assets/plugins/summernote/summernote-bs4.min.css') }}"></link>
     <link rel="stylesheet" href="{{ static_asset('assets/plugins/daterangepicker/daterangepicker.css') }}"></link>
+    <link rel="stylesheet" href="{{ static_asset('assets/css/sidebar.css') }}">
 
 
     @yield('style')

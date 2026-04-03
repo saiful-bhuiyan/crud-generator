@@ -19,7 +19,7 @@
                         <div class="profile-content">
                             <div class="profile-contentimg">
                                 @if(Auth::user()->avatar)
-                                <img src="{{ Auth::user()->avatar }}" alt="img" id="blah">
+                                <img src="{{ get_uploaded_asset(Auth::user()->avatar) }}" alt="img" id="blah">
                                 @else
                                 <img src="assets/img/customer/customer5.jpg" alt="img" id="blah">
                                 @endif

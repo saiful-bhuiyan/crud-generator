@@ -25,10 +25,38 @@
     <link rel="stylesheet" href="{{ static_asset('assets/css/style.css') }}">
 
     <link rel="stylesheet" href="{{ static_asset('assets/plugins/select2/css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('assets/css/custom-select2.css') }}">
     <link rel="stylesheet" href="{{ static_asset('assets/plugins/daterangepicker/daterangepicker.css') }}"></link>
     <link rel="stylesheet" href="{{ static_asset('assets/plugins/summernote/summernote-bs4.min.css') }}"></link>
     <link rel="stylesheet" href="{{ static_asset('assets/plugins/daterangepicker/daterangepicker.css') }}"></link>
     <link rel="stylesheet" href="{{ static_asset('assets/css/sidebar.css') }}">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+    <style>
+        :root {
+            --primary-color: {{ getGeneralSetting('primary_color') ?? '#1b2850' }};
+            --secondary-color: {{ getGeneralSetting('secondary_color') ?? '#ff9f43' }};
+            --sidebar-bg-color: {{ getGeneralSetting('sidebar_bg_color') ?? '#ffffff' }};
+            --sidebar-text-color: {{ getGeneralSetting('sidebar_text_color') ?? '#637381' }};
+        }
+
+        /* Dynamically apply primary and secondary colors to admin buttons */
+        .btn-submit,
+        .btn-primary {
+            background-color: var(--secondary-color, #ff9f43) !important;
+            border-color: var(--secondary-color, #ff9f43) !important;
+            color: #ffffff !important;
+        }
+
+        .btn-submit:hover,
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active {
+            background-color: var(--primary-color, #1b2850) !important;
+            border-color: var(--primary-color, #1b2850) !important;
+            color: #ffffff !important;
+        }
+    </style>
 
 
     @yield('style')
@@ -51,6 +79,7 @@
 
 
         <script src="{{ static_asset('assets/js/jquery-3.6.0.min.js') }}"></script>
+        <script src="{{ static_asset('assets/js/jquery-ui.min.js') }}"></script>
 
         <script src="{{ static_asset('assets/js/feather.min.js') }}"></script>
 
@@ -65,6 +94,7 @@
         <script src="{{ static_asset('assets/plugins/apexchart/chart-data.js') }}"></script>
 
         <script src="{{ static_asset('assets/js/script.js') }}"></script>
+        <script src="{{ static_asset('assets/js/invoice-share.js') }}"></script>
 
         <script src="{{ static_asset('assets/plugins/select2/js/select2.min.js') }}"></script>
 
@@ -80,6 +110,25 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
+        </script>
+
+        <script>
+            $(document).ready(function() {
+                // Initialize
+                $('.searchable-select').select2({
+                    width: '100%'
+                });
+
+                // Fix focus for fast switching
+                $(document).on('select2:open', function(e) {
+                    setTimeout(function() {
+                        const searchField = document.querySelector('.select2-search__field');
+                        if (searchField) {
+                            searchField.focus();
+                        }
+                    }, 10); // 10ms delay solves the "fast switch" race condition
+                });
+            });
         </script>
 
         <script>
@@ -107,7 +156,19 @@
 
 
             $(document).ready(function () {
-                    // Initialize Summernote on all elements with class 'html-editor'
+                // Disable mouse wheel scroll on number inputs to prevent accidental value change
+                $(document).on('wheel', 'input[type=number]', function (e) {
+                    $(this).blur();
+                });
+
+                // Initialize jQuery UI Datepicker globally
+                $('.datepicker').datepicker({
+                    dateFormat: 'yy-mm-dd',
+                    changeMonth: true,
+                    changeYear: true
+                });
+
+                // Initialize Summernote on all elements with class 'html-editor'
                     $('.html-editor').summernote({
                         height: 250,
                         toolbar: [
@@ -125,6 +186,6 @@
         </script>
 
         @yield('script')
-</body>
-
+        @stack('js')
+    </body>
 </html>

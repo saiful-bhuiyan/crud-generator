@@ -70,7 +70,7 @@
                     <div class="form-group">
                         <label>Currency Position<span class="manitory">*</span></label>
                         <input type="hidden" name="types[]" value="currency_position">
-                        <select name="currency_position" class="form-control">
+                        <select name="currency_position" class="form-control searchable-select">
                             <option value="">Select</option>
                             <option value="left" {{ getGeneralSetting('currency_position') == 'left' ? 'selected' : '' }}>Left</option>
                             <option value="right" {{ getGeneralSetting('currency_position') == 'right' ? 'selected' : '' }}>Right</option>
@@ -89,7 +89,7 @@
                     <div class="form-group">
                         <label>Date Format<span class="manitory">*</span></label>
                         <input type="hidden" name="types[]" value="date_format">
-                        <select class="select" name="date_format" class="form-control">
+                        <select name="date_format" class="form-control searchable-select">
                             <option value="">Choose Date Format </option>
                             <option value="d-m-Y" {{ getGeneralSetting('date_format') == 'd-m-Y' ? 'selected' : '' }}>d-m-Y (eg : 31-12-2023)</option>
                             <option value="Y-m-d" {{ getGeneralSetting('date_format') == 'Y-m-d' ? 'selected' : '' }}>Y-m-d (eg : 2023-12-31)</option>
@@ -119,6 +119,38 @@
                         <label>Address<span class="manitory">*</span> </label>
                         <input type="hidden" name="types[]" value="address">
                         <input type="text" name="address" value="{{ getGeneralSetting('address') }}" placeholder="Enter Address">
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-sm-6 col-12">
+                    <div class="form-group">
+                        <label>Primary Color</label>
+                        <input type="hidden" name="types[]" value="primary_color">
+                        <input type="color" name="primary_color" value="{{ getGeneralSetting('primary_color') ?? '#1b2850' }}" class="form-control form-control-color" style="width:100%; height:40px; padding:0px; border:1px solid #ced4da;">
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-sm-6 col-12">
+                    <div class="form-group">
+                        <label>Secondary Color</label>
+                        <input type="hidden" name="types[]" value="secondary_color">
+                        <input type="color" name="secondary_color" value="{{ getGeneralSetting('secondary_color') ?? '#ff9f43' }}" class="form-control form-control-color" style="width:100%; height:40px; padding:0px; border:1px solid #ced4da;">
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-sm-6 col-12">
+                    <div class="form-group">
+                        <label>Sidebar Background</label>
+                        <input type="hidden" name="types[]" value="sidebar_bg_color">
+                        <input type="color" name="sidebar_bg_color" value="{{ getGeneralSetting('sidebar_bg_color') ?? '#ffffff' }}" class="form-control form-control-color" style="width:100%; height:40px; padding:0px; border:1px solid #ced4da;">
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-sm-6 col-12">
+                    <div class="form-group">
+                        <label>Sidebar Text Color</label>
+                        <input type="hidden" name="types[]" value="sidebar_text_color">
+                        <input type="color" name="sidebar_text_color" value="{{ getGeneralSetting('sidebar_text_color') ?? '#637381' }}" class="form-control form-control-color" style="width:100%; height:40px; padding:0px; border:1px solid #ced4da;">
                     </div>
                 </div>
                 

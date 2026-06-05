@@ -37,7 +37,7 @@
             <ul id="menu-list" class="sidebar-nav">
                 <li class="menu-item {{ request()->is('admin') || request()->is('admin/') ? 'active' : '' }}">
                     <a href="{{ $adminUrl() }}">
-                        <span class="sidebar-nav__icon"><img src="{{ static_asset('assets/img/icons/dashboard.svg') }}" alt=""></span>
+                        <span class="sidebar-nav__icon"><i class="fas fa-th-large"></i></span>
                         <span class="sidebar-nav__text">Dashboard</span>
                     </a>
                 </li>
@@ -52,12 +52,12 @@
 
                         @if ($menu->children->count())
                             <li class="submenu menu-item {{ $isActive ? 'active' : '' }}">
-                                <a href="javascript:void(0);">
+                                <a href="javascript:void(0);" class="{{ $isActive ? 'subdrop' : '' }}">
                                     <span class="sidebar-nav__icon"><i class="{{ $menu->icon }}"></i></span>
                                     <span class="sidebar-nav__text">{{ $menu->title }}</span>
                                     <span class="menu-arrow" aria-hidden="true"></span>
                                 </a>
-                                <ul>
+                                <ul style="{{ $isActive ? 'display: block;' : '' }}">
                                     @foreach ($menu->children as $child)
                                         @if (auth()->user()->can($child->permission_name))
                                             <li class="child-item {{ $isCurrent($child->route) ? 'active' : '' }}">
@@ -86,7 +86,7 @@
     </div>
 </div>
 
-@section('script')
+@push('js')
 <script>
 (function () {
     var sidebar = document.getElementById('sidebar');
@@ -155,4 +155,4 @@
     }
 })();
 </script>
-@endsection
+@endpush

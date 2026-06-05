@@ -25,7 +25,12 @@
                             <table class="table table-bordered">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Module</th>
+                                        <th>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="checkAll">
+                                                <label class="form-check-label" for="checkAll"><strong>Module (Select All)</strong></label>
+                                            </div>
+                                        </th>
                                         <th>Create</th>
                                         <th>Read</th>
                                         <th>Update</th>
@@ -47,12 +52,17 @@
 
                                     @foreach($grouped as $module => $actions)
                                     <tr>
-                                        <td class="text-capitalize">{{ str_replace('_', ' ', $module) }}</td>
+                                        <td class="text-capitalize">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input checkModule">
+                                                <label class="form-check-label"><strong>{{ str_replace('_', ' ', $module) }}</strong></label>
+                                            </div>
+                                        </td>
                                         @foreach(['create', 'index', 'update', 'delete'] as $action)
                                         <td>
                                             @if(isset($actions[$action]))
                                             <div class="form-check">
-                                                <input type="checkbox" class="form-check-input" name="permissions[]" value="{{ $actions[$action] }}"
+                                                <input type="checkbox" class="form-check-input permission-checkbox" name="permissions[]" value="{{ $actions[$action] }}"
                                                     id="{{ $actions[$action] }}"
                                                     {{ $role->hasPermissionTo($actions[$action]) ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="{{ $actions[$action] }}"></label>
@@ -76,3 +86,56 @@
     </div>
 </div>
 @endsection
+
+@push('js')
+<script>
+    function updateCheckAll() {
+        let allCheckboxes = document.querySelectorAll('.permission-checkbox');
+        let checkAll = document.getElementById('checkAll');
+        if (allCheckboxes.length > 0) {
+            checkAll.checked = Array.from(allCheckboxes).every(c => c.checked);
+        }
+    }
+
+    function updateInitialState() {
+        document.querySelectorAll('.checkModule').forEach(moduleCb => {
+            let row = moduleCb.closest('tr');
+            let rowCheckboxes = row.querySelectorAll('.permission-checkbox');
+            if (rowCheckboxes.length > 0) {
+                moduleCb.checked = Array.from(rowCheckboxes).every(c => c.checked);
+            }
+        });
+        updateCheckAll();
+    }
+
+    // Call on load
+    document.addEventListener('DOMContentLoaded', updateInitialState);
+
+    document.getElementById('checkAll').addEventListener('change', function() {
+        let checkboxes = document.querySelectorAll('.permission-checkbox, .checkModule');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    document.querySelectorAll('.checkModule').forEach(moduleCb => {
+        moduleCb.addEventListener('change', function() {
+            let row = this.closest('tr');
+            let checkboxes = row.querySelectorAll('.permission-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            
+            updateCheckAll();
+        });
+    });
+
+    document.querySelectorAll('.permission-checkbox').forEach(cb => {
+        cb.addEventListener('change', function() {
+            let row = this.closest('tr');
+            let moduleCb = row.querySelector('.checkModule');
+            let rowCheckboxes = row.querySelectorAll('.permission-checkbox');
+            let allChecked = Array.from(rowCheckboxes).every(c => c.checked);
+            moduleCb.checked = allChecked;
+
+            updateCheckAll();
+        });
+    });
+</script>
+@endpush
